@@ -7,230 +7,197 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0f0f0f;
-    --surface: #181818;
-    --surface2: #222222;
-    --border: #2a2a2a;
-    --accent: #c8f53d;
-    --text: #f0f0f0;
-    --text-muted: #666;
-    --text-mid: #999;
-    --danger: #ff4d4d;
-    --warning: #ffaa00;
-    --radius: 12px;
-    --mono: 'DM Mono', monospace;
-    --sans: 'Syne', sans-serif;
+    --bg: #0f0f0f; --surface: #181818; --surface2: #222; --border: #2a2a2a;
+    --accent: #c8f53d; --text: #f0f0f0; --text-muted: #666; --text-mid: #999;
+    --danger: #ff4d4d; --warning: #ffaa00; --info: #64a0ff;
+    --radius: 12px; --mono: 'DM Mono', monospace; --sans: 'Syne', sans-serif;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; overflow-x: hidden; }
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background-image: linear-gradient(rgba(200,245,61,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(200,245,61,0.02) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none; z-index: 0;
-  }
-  .app { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+  body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(200,245,61,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(200,245,61,.02) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; z-index:0; }
+  .app { position:relative; z-index:1; max-width:960px; margin:0 auto; padding:2rem 1.5rem 4rem; }
 
-  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); gap: 1rem; flex-wrap: wrap; }
-  .logo { display: flex; align-items: baseline; gap: 0.4rem; }
-  .logo-main { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.04em; color: var(--accent); }
-  .logo-sub { font-family: var(--mono); font-size: 0.7rem; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; }
-  .header-right { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
-  .header-stats { display: flex; gap: 2rem; align-items: center; }
-  .stat { text-align: right; }
-  .stat-val { font-family: var(--mono); font-size: 1.4rem; font-weight: 500; color: var(--accent); line-height: 1; }
-  .stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-top: 2px; }
+  header { display:flex; align-items:center; justify-content:space-between; margin-bottom:2.5rem; padding-bottom:1.5rem; border-bottom:1px solid var(--border); gap:1rem; flex-wrap:wrap; }
+  .logo { display:flex; align-items:baseline; gap:.4rem; }
+  .logo-main { font-size:1.8rem; font-weight:800; letter-spacing:-.04em; color:var(--accent); }
+  .logo-sub { font-family:var(--mono); font-size:.7rem; color:var(--text-muted); letter-spacing:.1em; text-transform:uppercase; }
+  .header-right { display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap; }
+  .header-stats { display:flex; gap:2rem; align-items:center; }
+  .stat { text-align:right; }
+  .stat-val { font-family:var(--mono); font-size:1.4rem; font-weight:500; color:var(--accent); line-height:1; }
+  .stat-label { font-size:.65rem; text-transform:uppercase; letter-spacing:.1em; color:var(--text-muted); margin-top:2px; }
 
-  .sync-indicator { display: flex; align-items: center; gap: 0.4rem; font-family: var(--mono); font-size: 0.7rem; color: var(--text-muted); cursor: pointer; padding: 0.4rem 0.75rem; border: 1px solid var(--border); border-radius: 20px; transition: all 0.2s; }
-  .sync-indicator:hover { border-color: var(--accent); color: var(--text); }
-  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); transition: background 0.3s; }
-  .sync-dot.ok { background: #4dff91; }
-  .sync-dot.syncing { background: var(--accent); animation: pulse 1s infinite; }
-  .sync-dot.error { background: var(--danger); }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .sync-indicator { display:flex; align-items:center; gap:.4rem; font-family:var(--mono); font-size:.7rem; color:var(--text-muted); cursor:pointer; padding:.4rem .75rem; border:1px solid var(--border); border-radius:20px; transition:all .2s; }
+  .sync-indicator:hover { border-color:var(--accent); color:var(--text); }
+  .sync-dot { width:6px; height:6px; border-radius:50%; background:var(--text-muted); transition:background .3s; }
+  .sync-dot.ok { background:#4dff91; } .sync-dot.syncing { background:var(--accent); animation:pulse 1s infinite; } .sync-dot.error { background:var(--danger); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-  .tabs { display: flex; gap: 0; margin-bottom: 2rem; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
-  .tab-btn { flex: 1; padding: 0.75rem 0.5rem; background: transparent; border: none; color: var(--text-muted); font-family: var(--sans); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; border-right: 1px solid var(--border); }
-  .tab-btn:last-child { border-right: none; }
-  .tab-btn.active { background: var(--accent); color: #0f0f0f; }
-  .tab-btn:not(.active):hover { background: var(--surface2); color: var(--text); }
+  .tabs { display:flex; margin-bottom:2rem; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; background:var(--surface); }
+  .tab-btn { flex:1; padding:.75rem .4rem; background:transparent; border:none; color:var(--text-muted); font-family:var(--sans); font-size:.72rem; font-weight:600; letter-spacing:.04em; text-transform:uppercase; cursor:pointer; transition:all .2s; border-right:1px solid var(--border); }
+  .tab-btn:last-child { border-right:none; }
+  .tab-btn.active { background:var(--accent); color:#0f0f0f; }
+  .tab-btn:not(.active):hover { background:var(--surface2); color:var(--text); }
+  .panel { display:none; } .panel.active { display:block; }
 
-  .panel { display: none; }
-  .panel.active { display: block; }
-
-  /* SNELKNOPPEN bovenaan invoer */
-  .quick-actions { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem; }
-  .quick-btn {
-    background: var(--surface);
-    border: 1px solid var(--border);
+  /* SUGGESTIE BANNER */
+  .suggestie-banner {
+    background: linear-gradient(135deg, rgba(200,245,61,0.08), rgba(200,245,61,0.03));
+    border: 1px solid rgba(200,245,61,0.3);
     border-radius: var(--radius);
-    padding: 0.9rem 1.1rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-align: left;
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-  .quick-btn:hover { border-color: var(--accent); background: rgba(200,245,61,0.05); }
-  .quick-btn .qb-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
-  .quick-btn .qb-route { font-size: 0.85rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .quick-btn .qb-km { font-family: var(--mono); font-size: 0.75rem; color: var(--accent); }
-  .quick-btn .qb-badge { font-size: 0.6rem; color: var(--warning); margin-top: 2px; }
-  .quick-section-title { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.5rem; }
-  .quick-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
-  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.75rem; margin-bottom: 1.5rem; }
-  .form-title { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
-  .form-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
-  .form-group.full { grid-column: 1 / -1; }
-  label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
-  input[type=text], input[type=number], input[type=date], input[type=password], select, textarea {
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 0.85rem; color: var(--text); font-family: var(--mono); font-size: 0.9rem; outline: none; transition: border-color 0.2s, box-shadow 0.2s; width: 100%;
-  }
-  input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(200,245,61,0.1); }
-  select option { background: var(--surface2); }
-  textarea { resize: vertical; min-height: 70px; font-size: 0.85rem; }
-
-  /* CHECKBOX toggle */
-  .toggle-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0; }
-  .toggle-row label { font-size: 0.8rem; text-transform: none; letter-spacing: 0; color: var(--text-mid); cursor: pointer; }
-  input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
-
-  .km-diff { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 0.85rem; font-family: var(--mono); font-size: 1.1rem; font-weight: 500; color: var(--accent); min-height: 42px; display: flex; align-items: center; }
-  .km-diff.empty { color: var(--text-muted); font-size: 0.8rem; }
-
-  .btn { padding: 0.75rem 1.5rem; border-radius: 8px; border: none; font-family: var(--sans); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; }
-  .btn-primary { background: var(--accent); color: #0f0f0f; }
-  .btn-primary:hover { background: #d4ff4a; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(200,245,61,0.3); }
-  .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
-  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
-  .btn-sm { padding: 0.45rem 0.9rem; font-size: 0.75rem; }
-  .btn-danger { background: transparent; color: var(--danger); border: 1px solid transparent; padding: 0.4rem 0.6rem; font-size: 0.75rem; }
-  .btn-danger:hover { background: rgba(255,77,77,0.1); border-color: var(--danger); }
-  .form-actions { display: flex; gap: 0.75rem; margin-top: 1.25rem; justify-content: flex-end; flex-wrap: wrap; }
-
-  .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--accent); color: #0f0f0f; padding: 0.75rem 1.25rem; border-radius: 8px; font-weight: 700; font-size: 0.85rem; transform: translateY(100px); opacity: 0; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 999; pointer-events: none; max-width: 320px; }
-  .toast.show { transform: translateY(0); opacity: 1; }
-  .toast.fout { background: var(--danger); color: white; }
-
-  .filter-bar { display: flex; gap: 0.75rem; margin-bottom: 1rem; align-items: center; flex-wrap: wrap; }
-  .filter-bar input, .filter-bar select { flex: 1; min-width: 130px; font-size: 0.8rem; padding: 0.55rem 0.75rem; }
-  .search-box { flex: 2 !important; }
-
-  .ritten-list { display: flex; flex-direction: column; gap: 0.5rem; }
-  .rit-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; display: grid; grid-template-columns: 80px 1fr auto auto; gap: 1rem; align-items: center; transition: border-color 0.2s; animation: fadeIn 0.25s ease; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
-  .rit-item:hover { border-color: #333; background: #1c1c1c; }
-  .rit-item.zakelijk { border-left: 3px solid var(--accent); }
-  .rit-item.prive { border-left: 3px solid #555; }
-  .rit-item.woonwerk { border-left: 3px solid var(--warning); }
-  .rit-date { font-family: var(--mono); font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; }
-  .rit-date strong { display: block; font-size: 1rem; color: var(--text); font-weight: 500; }
-  .rit-route { min-width: 0; }
-  .rit-van-naar { font-size: 0.85rem; color: var(--text); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .rit-doel { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .rit-km-val { font-family: var(--mono); font-size: 1.1rem; font-weight: 500; color: var(--accent); text-align: right; }
-  .rit-km-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; text-align: right; }
-  .rit-badge { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-top: 3px; display: inline-block; }
-  .badge-zakelijk { background: rgba(200,245,61,0.15); color: var(--accent); }
-  .badge-prive { background: rgba(255,255,255,0.06); color: var(--text-muted); }
-  .badge-woonwerk { background: rgba(255,170,0,0.15); color: var(--warning); }
-  .rit-actions { display: flex; gap: 0.25rem; }
-
-  .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
-  .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.3; }
-  .empty-state p { font-size: 0.85rem; line-height: 1.6; }
-
-  /* ADRESBOEK */
-  .adres-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
-  .adres-card {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 0.9rem 1rem;
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-    transition: border-color 0.2s;
-  }
-  .adres-card:hover { border-color: #444; }
-  .adres-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 1px; }
-  .adres-info { flex: 1; min-width: 0; }
-  .adres-naam { font-size: 0.85rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .adres-adres { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--mono); }
-  .adres-tag { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block; }
-  .tag-werk { background: rgba(200,245,61,0.12); color: var(--accent); }
-  .tag-klant { background: rgba(100,160,255,0.12); color: #64a0ff; }
-  .tag-thuis { background: rgba(255,170,0,0.12); color: var(--warning); }
-  .tag-overig { background: rgba(255,255,255,0.06); color: var(--text-muted); }
-  .adres-card-actions { display: flex; flex-direction: column; gap: 0.25rem; }
-
-  /* RAPPORT */
-  .rapport-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
-  .rapport-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
-  .rapport-card.highlight { border-color: var(--accent); background: rgba(200,245,61,0.05); }
-  .rapport-val { font-family: var(--mono); font-size: 2rem; font-weight: 500; color: var(--accent); line-height: 1; margin-bottom: 0.25rem; }
-  .rapport-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
-  .rapport-sub { font-size: 0.75rem; color: var(--text-mid); margin-top: 0.25rem; }
-
-  .settings-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; }
-  .settings-section h3 { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
-  .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .danger-zone { border-color: rgba(255,77,77,0.3) !important; }
-  .danger-zone h3 { color: var(--danger) !important; }
-
-  .export-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-top: 1.5rem; }
-  .export-section h3 { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; }
-  .export-buttons { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-
-  .maand-tabel { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-  .maand-tabel th { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
-  .maand-tabel td { padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.8rem; color: var(--text-mid); }
-  .maand-tabel tr:last-child td { border-bottom: none; }
-  .maand-tabel td:first-child { color: var(--text); font-family: var(--sans); }
-  .maand-tabel td.accent { color: var(--accent); }
-
-  .pagination { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1.5rem; align-items: center; }
-  .page-info { font-family: var(--mono); font-size: 0.75rem; color: var(--text-muted); padding: 0 1rem; }
-
-  /* MODAL */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
-  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; max-width: 480px; width: 100%; max-height: 90vh; overflow-y: auto; }
-  .modal h2 { font-size: 1.3rem; font-weight: 800; color: var(--accent); margin-bottom: 0.5rem; }
-  .modal p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.6; }
-  .modal .form-group { margin-bottom: 1rem; }
-
-  /* Woon-werk vaste rit card */
-  .ww-card {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem 1.1rem;
-    margin-bottom: 0.6rem;
+    padding: 1.1rem 1.4rem;
+    margin-bottom: 1.25rem;
     display: flex;
     align-items: center;
     gap: 1rem;
+    flex-wrap: wrap;
+    animation: fadeIn .4s ease;
   }
-  .ww-card:hover { border-color: var(--warning); }
-  .ww-info { flex: 1; min-width: 0; }
-  .ww-naam { font-size: 0.85rem; font-weight: 700; color: var(--text); }
-  .ww-detail { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; font-family: var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .ww-km { font-family: var(--mono); font-size: 1rem; color: var(--warning); font-weight: 500; flex-shrink: 0; }
-  .ww-actions { display: flex; gap: 0.3rem; flex-shrink: 0; }
+  .suggestie-icon { font-size: 1.8rem; flex-shrink: 0; }
+  .suggestie-tekst { flex: 1; min-width: 0; }
+  .suggestie-titel { font-size: .9rem; font-weight: 700; color: var(--accent); }
+  .suggestie-detail { font-size: .75rem; color: var(--text-muted); margin-top: 2px; font-family: var(--mono); }
+  .suggestie-acties { display: flex; gap: .5rem; flex-shrink: 0; flex-wrap: wrap; }
 
-  @media (max-width: 600px) {
-    .header-stats { gap: 1rem; }
-    .stat-val { font-size: 1.1rem; }
-    .form-grid { grid-template-columns: 1fr; }
-    .form-group.full { grid-column: 1; }
-    .rapport-grid { grid-template-columns: 1fr 1fr; }
-    .rit-item { grid-template-columns: 60px 1fr auto auto; }
-    .settings-grid { grid-template-columns: 1fr; }
-    .quick-actions { grid-template-columns: 1fr 1fr; }
+  /* QUICK ACTIONS */
+  .quick-actions { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:.75rem; margin-bottom:1.5rem; }
+  .quick-btn { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:.9rem 1.1rem; cursor:pointer; transition:all .2s; text-align:left; display:flex; flex-direction:column; gap:.2rem; }
+  .quick-btn:hover { border-color:var(--accent); background:rgba(200,245,61,.05); }
+  .qb-label { font-size:.65rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text-muted); }
+  .qb-route { font-size:.85rem; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .qb-retour { font-size:.7rem; color:var(--warning); margin-top:3px; cursor:pointer; display:inline-block; padding:2px 6px; border:1px solid rgba(255,170,0,.3); border-radius:4px; }
+  .qb-retour:hover { background:rgba(255,170,0,.1); }
+  .section-title { font-size:.65rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--text-muted); margin-bottom:.6rem; display:flex; align-items:center; gap:.5rem; }
+  .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  .form-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.75rem; margin-bottom:1.5rem; }
+  .form-title { font-size:.7rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--text-muted); margin-bottom:1.25rem; display:flex; align-items:center; gap:.5rem; }
+  .form-title::after { content:''; flex:1; height:1px; background:var(--border); }
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  .form-group { display:flex; flex-direction:column; gap:.4rem; }
+  .form-group.full { grid-column:1/-1; }
+  label { font-size:.7rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--text-muted); }
+  input[type=text],input[type=number],input[type=date],input[type=password],select,textarea {
+    background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:.65rem .85rem; color:var(--text); font-family:var(--mono); font-size:.9rem; outline:none; transition:border-color .2s,box-shadow .2s; width:100%;
+  }
+  input:focus,select:focus,textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(200,245,61,.1); }
+  select option { background:var(--surface2); }
+  textarea { resize:vertical; min-height:70px; font-size:.85rem; }
+
+  .km-diff { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:.65rem .85rem; font-family:var(--mono); font-size:1.1rem; font-weight:500; color:var(--accent); min-height:42px; display:flex; align-items:center; }
+  .km-diff.empty { color:var(--text-muted); font-size:.8rem; }
+
+  .btn { padding:.75rem 1.5rem; border-radius:8px; border:none; font-family:var(--sans); font-size:.85rem; font-weight:700; letter-spacing:.04em; cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:.4rem; }
+  .btn-primary { background:var(--accent); color:#0f0f0f; }
+  .btn-primary:hover { background:#d4ff4a; transform:translateY(-1px); box-shadow:0 4px 20px rgba(200,245,61,.3); }
+  .btn-ghost { background:transparent; color:var(--text-muted); border:1px solid var(--border); }
+  .btn-ghost:hover { background:var(--surface2); color:var(--text); }
+  .btn-sm { padding:.45rem .9rem; font-size:.75rem; }
+  .btn-warn { background:rgba(255,170,0,.15); color:var(--warning); border:1px solid rgba(255,170,0,.3); }
+  .btn-warn:hover { background:rgba(255,170,0,.25); }
+  .btn-danger { background:transparent; color:var(--danger); border:1px solid transparent; padding:.4rem .6rem; font-size:.75rem; }
+  .btn-danger:hover { background:rgba(255,77,77,.1); border-color:var(--danger); }
+  .form-actions { display:flex; gap:.75rem; margin-top:1.25rem; justify-content:flex-end; flex-wrap:wrap; }
+
+  .toast { position:fixed; bottom:2rem; right:2rem; background:var(--accent); color:#0f0f0f; padding:.75rem 1.25rem; border-radius:8px; font-weight:700; font-size:.85rem; transform:translateY(100px); opacity:0; transition:all .3s cubic-bezier(.34,1.56,.64,1); z-index:999; pointer-events:none; max-width:320px; }
+  .toast.show { transform:translateY(0); opacity:1; }
+  .toast.fout { background:var(--danger); color:#fff; }
+
+  .filter-bar { display:flex; gap:.75rem; margin-bottom:1rem; align-items:center; flex-wrap:wrap; }
+  .filter-bar input,.filter-bar select { flex:1; min-width:130px; font-size:.8rem; padding:.55rem .75rem; }
+  .search-box { flex:2!important; }
+
+  .ritten-list { display:flex; flex-direction:column; gap:.5rem; }
+  .rit-item { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; display:grid; grid-template-columns:80px 1fr auto auto; gap:1rem; align-items:center; transition:border-color .2s; animation:fadeIn .25s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+  .rit-item:hover { border-color:#333; background:#1c1c1c; }
+  .rit-item.zakelijk { border-left:3px solid var(--accent); }
+  .rit-item.prive { border-left:3px solid #555; }
+  .rit-item.woonwerk { border-left:3px solid var(--warning); }
+  .rit-date { font-family:var(--mono); font-size:.75rem; color:var(--text-muted); line-height:1.4; }
+  .rit-date strong { display:block; font-size:1rem; color:var(--text); font-weight:500; }
+  .rit-route { min-width:0; }
+  .rit-van-naar { font-size:.85rem; color:var(--text); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rit-doel { font-size:.75rem; color:var(--text-muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rit-km-val { font-family:var(--mono); font-size:1.1rem; font-weight:500; color:var(--accent); text-align:right; }
+  .rit-km-label { font-size:.65rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.08em; text-align:right; }
+  .rit-badge { font-size:.6rem; text-transform:uppercase; letter-spacing:.08em; font-weight:700; padding:2px 6px; border-radius:4px; margin-top:3px; display:inline-block; }
+  .badge-zakelijk { background:rgba(200,245,61,.15); color:var(--accent); }
+  .badge-prive { background:rgba(255,255,255,.06); color:var(--text-muted); }
+  .badge-woonwerk { background:rgba(255,170,0,.15); color:var(--warning); }
+  .rit-actions { display:flex; gap:.25rem; }
+  .empty-state { text-align:center; padding:4rem 2rem; color:var(--text-muted); }
+  .empty-state .icon { font-size:3rem; margin-bottom:1rem; opacity:.3; }
+  .empty-state p { font-size:.85rem; line-height:1.6; }
+
+  /* ADRESBOEK */
+  .adres-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:.75rem; margin-bottom:1rem; }
+  .adres-card { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:.9rem 1rem; display:flex; align-items:flex-start; gap:.75rem; transition:border-color .2s; }
+  .adres-card:hover { border-color:#444; }
+  .adres-icon { font-size:1.3rem; flex-shrink:0; margin-top:1px; }
+  .adres-info { flex:1; min-width:0; }
+  .adres-naam { font-size:.85rem; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .adres-adres { font-size:.75rem; color:var(--text-muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-family:var(--mono); }
+  .adres-tag { font-size:.6rem; text-transform:uppercase; letter-spacing:.08em; font-weight:700; padding:2px 6px; border-radius:4px; margin-top:4px; display:inline-block; }
+  .tag-werk { background:rgba(200,245,61,.12); color:var(--accent); }
+  .tag-klant { background:rgba(100,160,255,.12); color:var(--info); }
+  .tag-thuis { background:rgba(255,170,0,.12); color:var(--warning); }
+  .tag-overig { background:rgba(255,255,255,.06); color:var(--text-muted); }
+  .adres-card-actions { display:flex; flex-direction:column; gap:.25rem; }
+
+  /* RAPPORT */
+  .rapport-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.5rem; }
+  .rapport-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.25rem; }
+  .rapport-card.highlight { border-color:var(--accent); background:rgba(200,245,61,.05); }
+  .rapport-val { font-family:var(--mono); font-size:2rem; font-weight:500; color:var(--accent); line-height:1; margin-bottom:.25rem; }
+  .rapport-label { font-size:.7rem; text-transform:uppercase; letter-spacing:.1em; color:var(--text-muted); }
+  .rapport-sub { font-size:.75rem; color:var(--text-mid); margin-top:.25rem; }
+
+  .settings-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; margin-bottom:1rem; }
+  .settings-section h3 { font-size:.7rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--text-muted); margin-bottom:1rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); }
+  .settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  .danger-zone { border-color:rgba(255,77,77,.3)!important; }
+  .danger-zone h3 { color:var(--danger)!important; }
+  .export-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; margin-top:1.5rem; }
+  .export-section h3 { font-size:.7rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--text-muted); margin-bottom:1rem; }
+  .export-buttons { display:flex; gap:.75rem; flex-wrap:wrap; }
+  .maand-tabel { width:100%; border-collapse:collapse; font-size:.82rem; }
+  .maand-tabel th { font-size:.65rem; letter-spacing:.1em; text-transform:uppercase; color:var(--text-muted); padding:.5rem .75rem; text-align:left; border-bottom:1px solid var(--border); }
+  .maand-tabel td { padding:.6rem .75rem; border-bottom:1px solid var(--border); font-family:var(--mono); font-size:.8rem; color:var(--text-mid); }
+  .maand-tabel tr:last-child td { border-bottom:none; }
+  .maand-tabel td:first-child { color:var(--text); font-family:var(--sans); }
+  .maand-tabel td.accent { color:var(--accent); }
+  .pagination { display:flex; gap:.5rem; justify-content:center; margin-top:1.5rem; align-items:center; }
+  .page-info { font-family:var(--mono); font-size:.75rem; color:var(--text-muted); padding:0 1rem; }
+
+  /* MODALS */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:100; display:flex; align-items:center; justify-content:center; padding:1.5rem; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:2rem; max-width:500px; width:100%; max-height:90vh; overflow-y:auto; }
+  .modal h2 { font-size:1.3rem; font-weight:800; color:var(--accent); margin-bottom:.5rem; }
+  .modal p { font-size:.85rem; color:var(--text-muted); margin-bottom:1.5rem; line-height:1.6; }
+  .modal .form-group { margin-bottom:1rem; }
+
+  /* VASTE RIT CARDS */
+  .ww-card { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:1rem 1.1rem; margin-bottom:.6rem; display:flex; align-items:center; gap:1rem; }
+  .ww-card:hover { border-color:var(--warning); }
+  .ww-info { flex:1; min-width:0; }
+  .ww-naam { font-size:.85rem; font-weight:700; color:var(--text); }
+  .ww-detail { font-size:.75rem; color:var(--text-muted); margin-top:2px; font-family:var(--mono); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ww-km { font-family:var(--mono); font-size:1rem; color:var(--warning); font-weight:500; flex-shrink:0; }
+  .ww-days { font-size:.65rem; color:var(--info); font-family:var(--mono); margin-top:2px; }
+  .ww-actions { display:flex; gap:.3rem; flex-shrink:0; }
+
+  /* IMPORT RESULTAAT */
+  .import-result { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:1rem; margin-top:1rem; font-size:.8rem; color:var(--text-mid); line-height:1.7; }
+  .import-result strong { color:var(--accent); }
+
+  @media (max-width:600px) {
+    .header-stats { gap:1rem; } .stat-val { font-size:1.1rem; }
+    .form-grid { grid-template-columns:1fr; } .form-group.full { grid-column:1; }
+    .rapport-grid { grid-template-columns:1fr 1fr; }
+    .rit-item { grid-template-columns:60px 1fr auto auto; }
+    .settings-grid { grid-template-columns:1fr; }
+    .quick-actions { grid-template-columns:1fr 1fr; }
   }
 </style>
 </head>
@@ -246,15 +213,14 @@
   </div>
 </div>
 
-<!-- ADRES TOEVOEGEN MODAL -->
+<!-- ADRES MODAL -->
 <div class="modal-overlay" id="adres-modal" style="display:none">
   <div class="modal">
     <h2 id="adres-modal-titel">Locatie toevoegen</h2>
-    <p>Sla een vaste locatie op in je adresboek. Je kunt hem daarna snel invullen bij ritten.</p>
-    <div class="form-group"><label>Naam (bijv. "Kantoor Amsterdam")</label><input type="text" id="am-naam" placeholder="Kantoor, Klant XYZ..."></div>
+    <p>Sla een vaste locatie op. Je kunt hem snel invullen bij nieuwe ritten.</p>
+    <div class="form-group"><label>Naam</label><input type="text" id="am-naam" placeholder="Kantoor Amsterdam, Klant XYZ..."></div>
     <div class="form-group"><label>Adres / Omschrijving</label><input type="text" id="am-adres" placeholder="Straat 1, Plaats"></div>
-    <div class="form-group">
-      <label>Categorie</label>
+    <div class="form-group"><label>Categorie</label>
       <select id="am-cat">
         <option value="werk">🏢 Werk / Kantoor</option>
         <option value="klant">👤 Klant</option>
@@ -263,33 +229,56 @@
       </select>
     </div>
     <div class="form-actions">
-      <button class="btn btn-ghost" onclick="sluitAdresModal()">Annuleren</button>
+      <button class="btn btn-ghost" onclick="sluitModal('adres-modal')">Annuleren</button>
       <button class="btn btn-primary" onclick="slaAdresOp()">Opslaan</button>
     </div>
   </div>
 </div>
 
-<!-- WOON-WERK TOEVOEGEN MODAL -->
+<!-- VASTE RIT MODAL -->
 <div class="modal-overlay" id="ww-modal" style="display:none">
   <div class="modal">
     <h2 id="ww-modal-titel">Vaste rit toevoegen</h2>
-    <p>Sla een vaste rit op (bijv. woon-werk). Je kunt hem daarna met één klik registreren, optioneel als retour.</p>
-    <div class="form-group"><label>Naam (bijv. "Naar kantoor")</label><input type="text" id="wm-naam" placeholder="Woon-werk, Klantbezoek XYZ..."></div>
-    <div class="form-group"><label>Vertrekplaats</label><input type="text" id="wm-van" placeholder="Thuiskantoor Beesd" list="wm-van-list"><datalist id="wm-van-list"></datalist></div>
-    <div class="form-group"><label>Bestemming</label><input type="text" id="wm-naar" placeholder="Kantoor Utrecht" list="wm-naar-list"><datalist id="wm-naar-list"></datalist></div>
-    <div class="form-group"><label>Aantal km (enkele reis)</label><input type="number" id="wm-km" placeholder="42" min="1"></div>
-    <div class="form-group">
-      <label>Type rit</label>
+    <p>Sla een vaste route op. De app suggereert hem automatisch op de ingestelde dagen.</p>
+    <div class="form-group"><label>Naam</label><input type="text" id="wm-naam" placeholder="Naar Alkmaar, Klantbezoek XYZ..."></div>
+    <div class="form-group"><label>Vertrekplaats</label><input type="text" id="wm-van" list="wm-van-list"><datalist id="wm-van-list"></datalist></div>
+    <div class="form-group"><label>Bestemming</label><input type="text" id="wm-naar" list="wm-naar-list"><datalist id="wm-naar-list"></datalist></div>
+    <div class="form-group"><label>Km (enkele reis)</label><input type="number" id="wm-km" placeholder="104" min="1"></div>
+    <div class="form-group"><label>Type</label>
       <select id="wm-type">
         <option value="zakelijk">Zakelijk</option>
         <option value="woonwerk">Woon-werk</option>
         <option value="prive">Privé</option>
       </select>
     </div>
-    <div class="form-group"><label>Doel / Omschrijving</label><input type="text" id="wm-doel" placeholder="Woon-werkverkeer"></div>
+    <div class="form-group"><label>Doel / Omschrijving</label><input type="text" id="wm-doel" placeholder="Woon-werkverkeer, Klantbezoek..."></div>
+    <div class="form-group">
+      <label>Suggestie op dag(en) van de week</label>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.4rem;" id="dag-knoppen">
+        <!-- ingevuld via JS -->
+      </div>
+      <div style="font-size:.7rem;color:var(--text-muted);margin-top:.4rem">App toont een suggestie als je hem op deze dag(en) opent</div>
+    </div>
     <div class="form-actions">
-      <button class="btn btn-ghost" onclick="sluitWwModal()">Annuleren</button>
+      <button class="btn btn-ghost" onclick="sluitModal('ww-modal')">Annuleren</button>
       <button class="btn btn-primary" onclick="slaVasteRitOp()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<!-- EASYRIT IMPORT MODAL -->
+<div class="modal-overlay" id="import-modal" style="display:none">
+  <div class="modal">
+    <h2>EasyRit importeren</h2>
+    <p>Upload je EasyRit CSV export. Bestaande ritten worden niet dubbel toegevoegd.</p>
+    <div class="form-group">
+      <label>CSV bestand</label>
+      <input type="file" id="easyrit-file" accept=".csv" style="font-size:.85rem;padding:.5rem">
+    </div>
+    <div id="import-result"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="sluitModal('import-modal')">Sluiten</button>
+      <button class="btn btn-primary" onclick="verwerkEasyRit()">Importeren</button>
     </div>
   </div>
 </div>
@@ -298,7 +287,7 @@
   <header>
     <div class="logo">
       <span class="logo-main">KmLog</span>
-      <span class="logo-sub">Kilometerregistratie</span>
+      <span class="logo-sub">v3</span>
     </div>
     <div class="header-right">
       <div class="sync-indicator" onclick="syncNu()" title="Klik om te synchroniseren">
@@ -306,78 +295,42 @@
         <span id="sync-label">sync</span>
       </div>
       <div class="header-stats">
-        <div class="stat">
-          <div class="stat-val" id="stat-jaar-km">0</div>
-          <div class="stat-label">km dit jaar</div>
-        </div>
-        <div class="stat">
-          <div class="stat-val" id="stat-ritten">0</div>
-          <div class="stat-label">ritten</div>
-        </div>
+        <div class="stat"><div class="stat-val" id="stat-jaar-km">0</div><div class="stat-label">km dit jaar</div></div>
+        <div class="stat"><div class="stat-val" id="stat-ritten">0</div><div class="stat-label">ritten</div></div>
       </div>
     </div>
   </header>
 
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('invoer', this)">+ Nieuwe rit</button>
-    <button class="tab-btn" onclick="switchTab('ritten', this)">Ritten</button>
-    <button class="tab-btn" onclick="switchTab('rapport', this)">Rapport</button>
-    <button class="tab-btn" onclick="switchTab('adresboek', this)">Adresboek</button>
-    <button class="tab-btn" onclick="switchTab('instellingen', this)">Instellingen</button>
+    <button class="tab-btn active" onclick="switchTab('invoer',this)">+ Nieuwe rit</button>
+    <button class="tab-btn" onclick="switchTab('ritten',this)">Ritten</button>
+    <button class="tab-btn" onclick="switchTab('rapport',this)">Rapport</button>
+    <button class="tab-btn" onclick="switchTab('adresboek',this)">Adresboek</button>
+    <button class="tab-btn" onclick="switchTab('instellingen',this)">Instellingen</button>
   </div>
 
-  <!-- ===================== INVOER ===================== -->
+  <!-- INVOER -->
   <div class="panel active" id="panel-invoer">
-
-    <!-- Snelknoppen vaste ritten -->
+    <div id="suggestie-container"></div>
     <div id="snelknoppen-sectie"></div>
-
     <div class="form-card">
       <div class="form-title">Rit details</div>
       <div class="form-grid">
-        <div class="form-group">
-          <label>Datum</label>
-          <input type="date" id="inp-datum">
-        </div>
-        <div class="form-group">
-          <label>Type</label>
+        <div class="form-group"><label>Datum</label><input type="date" id="inp-datum"></div>
+        <div class="form-group"><label>Type</label>
           <select id="inp-type">
             <option value="zakelijk">Zakelijk</option>
             <option value="woonwerk">Woon-werk</option>
             <option value="prive">Privé</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>Vertrekplaats</label>
-          <input type="text" id="inp-van" placeholder="bijv. Thuiskantoor" list="adressen-van">
-          <datalist id="adressen-van"></datalist>
-        </div>
-        <div class="form-group">
-          <label>Bestemming</label>
-          <input type="text" id="inp-naar" placeholder="bijv. Klant Utrecht" list="adressen-naar">
-          <datalist id="adressen-naar"></datalist>
-        </div>
-        <div class="form-group">
-          <label>Beginstand (km)</label>
-          <input type="number" id="inp-km-start" placeholder="bijv. 45230" min="0">
-        </div>
-        <div class="form-group">
-          <label>Eindstand (km)</label>
-          <input type="number" id="inp-km-eind" placeholder="bijv. 45312" min="0">
-        </div>
-        <div class="form-group">
-          <label>Gereden km</label>
-          <div class="km-diff empty" id="km-diff">Vul begin- en eindstand in</div>
-        </div>
-        <div class="form-group">
-          <label>Doel / Relatie</label>
-          <input type="text" id="inp-doel" placeholder="bijv. Klantbezoek, Vergadering..." list="doelen-list">
-          <datalist id="doelen-list"></datalist>
-        </div>
-        <div class="form-group full">
-          <label>Opmerking (optioneel)</label>
-          <textarea id="inp-opmerking" placeholder="Extra info..."></textarea>
-        </div>
+        <div class="form-group"><label>Vertrekplaats</label><input type="text" id="inp-van" list="adressen-van"><datalist id="adressen-van"></datalist></div>
+        <div class="form-group"><label>Bestemming</label><input type="text" id="inp-naar" list="adressen-naar"><datalist id="adressen-naar"></datalist></div>
+        <div class="form-group"><label>Beginstand (km)</label><input type="number" id="inp-km-start" placeholder="bijv. 45230" min="0"></div>
+        <div class="form-group"><label>Eindstand (km)</label><input type="number" id="inp-km-eind" placeholder="bijv. 45312" min="0"></div>
+        <div class="form-group"><label>Gereden km</label><div class="km-diff empty" id="km-diff">Vul begin- en eindstand in</div></div>
+        <div class="form-group"><label>Doel / Relatie</label><input type="text" id="inp-doel" list="doelen-list"><datalist id="doelen-list"></datalist></div>
+        <div class="form-group full"><label>Opmerking (optioneel)</label><textarea id="inp-opmerking"></textarea></div>
       </div>
       <div class="form-actions">
         <button class="btn btn-ghost" onclick="resetForm()">Wissen</button>
@@ -386,7 +339,7 @@
     </div>
   </div>
 
-  <!-- ===================== RITTEN ===================== -->
+  <!-- RITTEN -->
   <div class="panel" id="panel-ritten">
     <div class="filter-bar">
       <input type="text" class="search-box" id="filter-zoek" placeholder="Zoek op bestemming, doel..." oninput="renderRitten()">
@@ -404,24 +357,12 @@
     <div class="pagination" id="pagination"></div>
   </div>
 
-  <!-- ===================== RAPPORT ===================== -->
+  <!-- RAPPORT -->
   <div class="panel" id="panel-rapport">
     <div class="rapport-grid">
-      <div class="rapport-card highlight">
-        <div class="rapport-val" id="rap-zakelijk-jaar">0</div>
-        <div class="rapport-label">Zakelijk km dit jaar</div>
-        <div class="rapport-sub" id="rap-zakelijk-vergoeding">€ 0,00 vergoeding</div>
-      </div>
-      <div class="rapport-card">
-        <div class="rapport-val" id="rap-woonwerk-jaar">0</div>
-        <div class="rapport-label">Woon-werk km dit jaar</div>
-        <div class="rapport-sub" id="rap-woonwerk-vergoeding">€ 0,00 vergoeding</div>
-      </div>
-      <div class="rapport-card">
-        <div class="rapport-val" id="rap-totaal-jaar">0</div>
-        <div class="rapport-label">Totaal km dit jaar</div>
-        <div class="rapport-sub" id="rap-ritten-jaar">0 ritten</div>
-      </div>
+      <div class="rapport-card highlight"><div class="rapport-val" id="rap-zakelijk-jaar">0</div><div class="rapport-label">Zakelijk km dit jaar</div><div class="rapport-sub" id="rap-zakelijk-verg">€ 0,00 vergoeding</div></div>
+      <div class="rapport-card"><div class="rapport-val" id="rap-woonwerk-jaar">0</div><div class="rapport-label">Woon-werk km dit jaar</div><div class="rapport-sub" id="rap-woonwerk-verg">€ 0,00 vergoeding</div></div>
+      <div class="rapport-card"><div class="rapport-val" id="rap-totaal-jaar">0</div><div class="rapport-label">Totaal km dit jaar</div><div class="rapport-sub" id="rap-ritten-jaar">0 ritten</div></div>
     </div>
     <div class="settings-section">
       <h3>Overzicht per maand</h3>
@@ -440,44 +381,43 @@
     </div>
   </div>
 
-  <!-- ===================== ADRESBOEK ===================== -->
+  <!-- ADRESBOEK -->
   <div class="panel" id="panel-adresboek">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.75rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem;">
       <div>
-        <div style="font-size:1rem;font-weight:700;color:var(--text)">Adresboek</div>
-        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px">Vaste locaties — klik op een kaart om hem in te vullen bij een nieuwe rit</div>
+        <div style="font-size:1rem;font-weight:700">Adresboek & Vaste ritten</div>
+        <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">Klik "↑ van" of "↓ naar" om een locatie in te vullen bij een nieuwe rit</div>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="openAdresModal()">+ Locatie toevoegen</button>
+      <button class="btn btn-primary btn-sm" onclick="openAdresModal()">+ Locatie</button>
     </div>
-
-    <div style="margin-bottom:1.5rem;">
-      <div class="quick-section-title">Vaste ritten (woon-werk)</div>
+    <div style="margin-bottom:1.75rem;">
+      <div class="section-title">Vaste ritten</div>
       <div id="ww-lijst"></div>
-      <button class="btn btn-ghost btn-sm" onclick="openWwModal()" style="margin-top:0.5rem">+ Vaste rit toevoegen</button>
+      <button class="btn btn-ghost btn-sm" onclick="openWwModal()" style="margin-top:.5rem">+ Vaste rit toevoegen</button>
     </div>
-
     <div>
-      <div class="quick-section-title">Locaties</div>
+      <div class="section-title">Locaties</div>
       <div class="adres-grid" id="adres-grid"></div>
+      <button class="btn btn-ghost btn-sm" onclick="openAdresModal()" style="margin-top:.5rem">+ Locatie toevoegen</button>
     </div>
   </div>
 
-  <!-- ===================== INSTELLINGEN ===================== -->
+  <!-- INSTELLINGEN -->
   <div class="panel" id="panel-instellingen">
     <div class="settings-section">
       <h3>Bedrijfsgegevens</h3>
       <div class="settings-grid">
-        <div class="form-group"><label>Naam / Bedrijfsnaam</label><input type="text" id="set-naam" placeholder="Jan Jansen"></div>
-        <div class="form-group"><label>KvK-nummer</label><input type="text" id="set-kvk" placeholder="12345678"></div>
-        <div class="form-group"><label>Btw-nummer</label><input type="text" id="set-btw" placeholder="NL123456789B01"></div>
-        <div class="form-group"><label>Standaard vertrekplaats</label><input type="text" id="set-thuis" placeholder="Thuiskantoor Beesd"></div>
+        <div class="form-group"><label>Naam / Bedrijfsnaam</label><input type="text" id="set-naam"></div>
+        <div class="form-group"><label>KvK-nummer</label><input type="text" id="set-kvk"></div>
+        <div class="form-group"><label>Btw-nummer</label><input type="text" id="set-btw"></div>
+        <div class="form-group"><label>Standaard vertrekplaats</label><input type="text" id="set-thuis"></div>
       </div>
       <div class="form-actions"><button class="btn btn-primary" onclick="slaInstellingenOp()">Opslaan</button></div>
     </div>
     <div class="settings-section">
       <h3>Km-vergoeding & jaar</h3>
       <div class="settings-grid">
-        <div class="form-group"><label>Vergoeding per km (€)</label><input type="number" id="set-vergoeding" placeholder="0.23" step="0.01" min="0" max="1"></div>
+        <div class="form-group"><label>Vergoeding per km (€)</label><input type="number" id="set-vergoeding" step="0.01" min="0" max="1"></div>
         <div class="form-group"><label>Rapportage jaar</label><input type="number" id="set-jaar"></div>
       </div>
       <div class="form-actions"><button class="btn btn-primary" onclick="slaInstellingenOp()">Opslaan</button></div>
@@ -487,7 +427,7 @@
       <div id="autos-list" style="margin-bottom:1rem;"></div>
       <div class="form-grid">
         <div class="form-group"><label>Kenteken</label><input type="text" id="auto-kenteken" placeholder="AB-12-CD"></div>
-        <div class="form-group"><label>Omschrijving</label><input type="text" id="auto-omschrijving" placeholder="bijv. VW Golf"></div>
+        <div class="form-group"><label>Omschrijving</label><input type="text" id="auto-omschrijving" placeholder="KTM 1290"></div>
       </div>
       <div class="form-actions"><button class="btn btn-ghost" onclick="voegAutoToe()">+ Auto toevoegen</button></div>
     </div>
@@ -504,42 +444,73 @@
     </div>
     <div class="settings-section danger-zone">
       <h3>Gevaarlijke zone</h3>
-      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
-        <button class="btn btn-ghost" onclick="importJSON()">⬆ Lokale backup terugzetten</button>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+        <button class="btn btn-ghost" onclick="document.getElementById('import-modal').style.display='flex'">⬆ EasyRit CSV importeren</button>
+        <button class="btn btn-ghost" onclick="importJSON()">⬆ JSON backup terugzetten</button>
         <button class="btn btn-danger" onclick="verwijderAlles()">✕ Alle data verwijderen</button>
       </div>
-      <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.75rem;">Data wordt automatisch gesynchroniseerd met GitHub.</p>
+      <p style="font-size:.75rem;color:var(--text-muted);margin-top:.75rem;">Data wordt automatisch gesynchroniseerd met GitHub.</p>
     </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
-<input type="file" id="import-file" accept=".json" style="display:none" onchange="verwerkImport(event)">
+<input type="file" id="import-json-file" accept=".json" style="display:none" onchange="verwerkJsonImport(event)">
 
 <script>
 // ============================================================
-// CONFIG
+// CONFIG & STATE
 // ============================================================
 const GITHUB_USER = 'marcusvliem';
 const GITHUB_REPO = 'KMlog';
-const DATA_FILE = 'data/ritten.json';
-const TOKEN_KEY = 'kmlog_github_token';
-const LOCAL_KEY = 'kmlog_data';
+const DATA_FILE   = 'data/ritten.json';
+const APP_FILE    = 'index.html';
+const TOKEN_KEY   = 'kmlog_github_token';
+const LOCAL_KEY   = 'kmlog_data';
+const VERSION_KEY = 'kmlog_version';
+const APP_VERSION = '3.0.0';
 
-// ============================================================
-// STATE
-// ============================================================
-let data = { ritten: [], instellingen: defaultInst(), autos: [], adressen: [], vasteRitten: [] };
+let data = { ritten:[], instellingen:defaultInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = localStorage.getItem(TOKEN_KEY) || '';
-let fileSha = null;
-let syncTimer = null;
+let fileSha = null, syncTimer = null;
 let huidigePagina = 1;
 const PER_PAGINA = 25;
-let adresEditIdx = null;
-let wwEditIdx = null;
+let adresEditIdx = null, wwEditIdx = null;
+const DAGEN = ['Zo','Ma','Di','Wo','Do','Vr','Za'];
+let geselecteerdeDagen = [];
 
 function defaultInst() {
-  return { naam:'', kvk:'', btw:'', thuis:'', vergoeding:0.23, jaar: new Date().getFullYear() };
+  return { naam:'', kvk:'', btw:'', thuis:'', vergoeding:0.23, jaar:new Date().getFullYear() };
+}
+
+// ============================================================
+// ZELF-UPDATE CHECK
+// ============================================================
+async function checkVoorUpdate() {
+  if (!githubToken) return;
+  try {
+    const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${APP_FILE}`, {
+      headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if (!res.ok) return;
+    const file = await res.json();
+    const remoteContent = decodeURIComponent(escape(atob(file.content.replace(/\n/g,''))));
+    // Check version string in remote file
+    const match = remoteContent.match(/APP_VERSION = '([^']+)'/);
+    if (!match) return;
+    const remoteVersion = match[1];
+    if (remoteVersion !== APP_VERSION) {
+      // Laad de nieuwe versie via een blob en herlaad
+      const blob = new Blob([remoteContent], {type:'text/html'});
+      const url = URL.createObjectURL(blob);
+      toon('Nieuwe versie gevonden — even herladen...');
+      setTimeout(() => {
+        // Sla data lokaal op voor overdracht
+        localStorage.setItem(LOCAL_KEY, JSON.stringify(data));
+        window.location.href = url;
+      }, 1500);
+    }
+  } catch(e) { /* stil falen */ }
 }
 
 // ============================================================
@@ -549,417 +520,417 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('inp-datum').valueAsDate = new Date();
   document.getElementById('inp-km-start').addEventListener('input', updateKmDiff);
   document.getElementById('inp-km-eind').addEventListener('input', updateKmDiff);
+  renderDagKnoppen();
 
   if (!githubToken) {
     document.getElementById('setup-modal').style.display = 'flex';
   } else {
     await laadVanGithub();
+    checkVoorUpdate(); // op achtergrond checken
   }
+  toonDagSuggesties();
 });
 
 // ============================================================
 // GITHUB
 // ============================================================
 async function slaGithubConfig() {
-  const token = document.getElementById('setup-token').value.trim();
-  if (!token) { toon('Voer een token in', true); return; }
-  githubToken = token;
-  localStorage.setItem(TOKEN_KEY, token);
+  const t = document.getElementById('setup-token').value.trim();
+  if (!t) { toon('Voer een token in', true); return; }
+  githubToken = t; localStorage.setItem(TOKEN_KEY, t);
   document.getElementById('setup-modal').style.display = 'none';
   await laadVanGithub();
+  checkVoorUpdate();
 }
-
 function updateToken() {
   const t = document.getElementById('set-token').value.trim();
   if (!t) { toon('Voer een geldig token in', true); return; }
-  githubToken = t;
-  localStorage.setItem(TOKEN_KEY, t);
-  toon('Token bijgewerkt');
+  githubToken = t; localStorage.setItem(TOKEN_KEY, t); toon('Token bijgewerkt');
 }
-
 function setSyncStatus(s, label) {
   document.getElementById('sync-dot').className = 'sync-dot ' + s;
   document.getElementById('sync-label').textContent = label;
 }
-
 async function githubGet(path) {
   const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${path}`, {
-    headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' }
+    headers: { 'Authorization':`token ${githubToken}`, 'Accept':'application/vnd.github.v3+json' }
   });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error('GitHub ' + res.status);
   return res.json();
 }
-
 async function githubPut(path, content, sha) {
-  const body = { message: 'KmLog sync ' + new Date().toISOString(), content: btoa(unescape(encodeURIComponent(content))) };
+  const body = { message:'KmLog sync '+new Date().toISOString(), content:btoa(unescape(encodeURIComponent(content))) };
   if (sha) body.sha = sha;
   const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${path}`, {
-    method: 'PUT',
-    headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
-    body: JSON.stringify(body)
+    method:'PUT', headers:{'Authorization':`token ${githubToken}`,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
+    body:JSON.stringify(body)
   });
   if (!res.ok) throw new Error('Opslaan ' + res.status);
   return res.json();
 }
-
 async function laadVanGithub() {
-  setSyncStatus('syncing', 'laden...');
+  setSyncStatus('syncing','laden...');
   try {
     const file = await githubGet(DATA_FILE);
     if (file) {
       fileSha = file.sha;
       const decoded = decodeURIComponent(escape(atob(file.content.replace(/\n/g,''))));
       const remote = JSON.parse(decoded);
-      // Zorg dat nieuwe velden bestaan
       data = { ritten:[], instellingen:defaultInst(), autos:[], adressen:[], vasteRitten:[], ...remote };
-      if (!data.adressen) data.adressen = [];
-      if (!data.vasteRitten) data.vasteRitten = [];
-    } else {
-      await slaOpGithub(false);
-    }
-    updateUI();
-    setSyncStatus('ok', 'gesynchroniseerd');
+    } else { await slaOpGithub(false); }
+    updateUI(); setSyncStatus('ok','gesynchroniseerd');
     if (data.instellingen.thuis) document.getElementById('inp-van').value = data.instellingen.thuis;
   } catch(e) {
-    setSyncStatus('error', 'sync fout');
-    toon('GitHub fout: ' + e.message, true);
+    setSyncStatus('error','sync fout'); toon('GitHub fout: '+e.message, true);
     const local = localStorage.getItem(LOCAL_KEY);
-    if (local) { data = { adressen:[], vasteRitten:[], ...JSON.parse(local) }; updateUI(); }
+    if (local) { data = {adressen:[],vasteRitten:[],...JSON.parse(local)}; updateUI(); }
   }
 }
-
-async function slaOpGithub(toonMsg = true) {
+async function slaOpGithub(toonMsg=true) {
   if (!githubToken) return;
-  setSyncStatus('syncing', 'opslaan...');
+  setSyncStatus('syncing','opslaan...');
   try {
     const json = JSON.stringify(data, null, 2);
     const result = await githubPut(DATA_FILE, json, fileSha);
     fileSha = result.content.sha;
     localStorage.setItem(LOCAL_KEY, json);
-    setSyncStatus('ok', 'gesynchroniseerd');
+    setSyncStatus('ok','gesynchroniseerd');
     if (toonMsg) toon('Opgeslagen & gesynchroniseerd ✓');
   } catch(e) {
-    setSyncStatus('error', 'sync fout');
+    setSyncStatus('error','sync fout');
     localStorage.setItem(LOCAL_KEY, JSON.stringify(data));
     toon('Lokaal opgeslagen, sync mislukt', true);
   }
 }
-
 async function syncNu() { await laadVanGithub(); toon('Gesynchroniseerd ✓'); }
 async function forceerSync() { await slaOpGithub(true); }
-
-function planSync() {
-  clearTimeout(syncTimer);
-  syncTimer = setTimeout(() => slaOpGithub(false), 3000);
-}
+function planSync() { clearTimeout(syncTimer); syncTimer = setTimeout(()=>slaOpGithub(false), 3000); }
 
 // ============================================================
-// UI UPDATE
+// UI
 // ============================================================
 function updateUI() {
-  updateStats();
-  vulAutocomplete();
-  renderSnelknoppen();
-  laadInstellingenUI();
+  updateStats(); vulAutocomplete(); renderSnelknoppen(); laadInstellingenUI(); toonDagSuggesties();
 }
-
-// ============================================================
-// TABS
-// ============================================================
 function switchTab(tab, btn) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('panel-' + tab).classList.add('active');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
   btn.classList.add('active');
-  if (tab === 'ritten') { vulMaandFilter(); renderRitten(); }
-  if (tab === 'rapport') renderRapport();
-  if (tab === 'adresboek') renderAdresboek();
-  if (tab === 'instellingen') laadInstellingenUI();
+  if (tab==='ritten') { vulMaandFilter(); renderRitten(); }
+  if (tab==='rapport') renderRapport();
+  if (tab==='adresboek') renderAdresboek();
+  if (tab==='instellingen') laadInstellingenUI();
 }
 
 // ============================================================
-// INVOER
+// DAG SUGGESTIES
 // ============================================================
-function updateKmDiff() {
-  const s = parseFloat(document.getElementById('inp-km-start').value);
-  const e = parseFloat(document.getElementById('inp-km-eind').value);
-  const el = document.getElementById('km-diff');
-  if (!isNaN(s) && !isNaN(e) && e >= s) {
-    el.textContent = (e-s).toLocaleString('nl-NL') + ' km';
-    el.classList.remove('empty');
-  } else {
-    el.textContent = 'Vul begin- en eindstand in';
-    el.classList.add('empty');
+function toonDagSuggesties() {
+  const container = document.getElementById('suggestie-container');
+  if (!container) return;
+  const vandaag = new Date().getDay(); // 0=zo, 1=ma...
+  const vr = (data.vasteRitten||[]).filter(r => (r.dagen||[]).includes(vandaag));
+  // Check: al geregistreerd vandaag?
+  const datumStr = new Date().toISOString().slice(0,10);
+  const al = new Set(data.ritten.filter(r=>r.datum===datumStr && r.vasteRitId).map(r=>r.vasteRitId));
+  const nog = vr.filter(r => !al.has(String(r.id||r.naam)));
+
+  if (!nog.length) { container.innerHTML=''; return; }
+
+  container.innerHTML = nog.map(r => `
+    <div class="suggestie-banner">
+      <div class="suggestie-icon">📅</div>
+      <div class="suggestie-tekst">
+        <div class="suggestie-titel">Vaste rit vandaag — ${r.naam}</div>
+        <div class="suggestie-detail">${r.van} → ${r.naar} · ${r.km} km · ${r.type}</div>
+      </div>
+      <div class="suggestie-acties">
+        <button class="btn btn-primary btn-sm" onclick="bevestigSuggestie('${r.naam}', false)">✓ Bevestigen</button>
+        <button class="btn btn-warn btn-sm" onclick="bevestigSuggestie('${r.naam}', true)">⇄ Retour (${r.km*2} km)</button>
+        <button class="btn btn-ghost btn-sm" onclick="this.closest('.suggestie-banner').remove()">Niet vandaag</button>
+      </div>
+    </div>`).join('');
+}
+
+async function bevestigSuggestie(naam, retour) {
+  const r = (data.vasteRitten||[]).find(v=>v.naam===naam);
+  if (!r) return;
+  const datum = new Date().toISOString().slice(0,10);
+  const id = String(r.id||r.naam);
+  const heen = { id:Date.now(), datum, type:r.type, van:r.van, naar:r.naar, kmStart:0, kmEind:r.km, km:r.km, doel:r.doel||r.naam, opmerking:'Vaste rit'+(retour?' (heen)':''), vasteRitId:id };
+  data.ritten.unshift(heen);
+  if (retour) {
+    const terug = { id:Date.now()+1, datum, type:r.type, van:r.naar, naar:r.van, kmStart:0, kmEind:r.km, km:r.km, doel:r.doel||r.naam, opmerking:'Vaste rit (retour)', vasteRitId:id };
+    data.ritten.unshift(terug);
   }
-}
-
-async function slaRitOp() {
-  const datum = document.getElementById('inp-datum').value;
-  const type = document.getElementById('inp-type').value;
-  const van = document.getElementById('inp-van').value.trim();
-  const naar = document.getElementById('inp-naar').value.trim();
-  const kmStart = parseFloat(document.getElementById('inp-km-start').value);
-  const kmEind = parseFloat(document.getElementById('inp-km-eind').value);
-  const doel = document.getElementById('inp-doel').value.trim();
-  const opmerking = document.getElementById('inp-opmerking').value.trim();
-
-  if (!datum || !van || !naar) { toon('Vul datum, vertrek en bestemming in', true); return; }
-  if (isNaN(kmStart) || isNaN(kmEind) || kmEind < kmStart) { toon('Controleer de km-standen', true); return; }
-
-  const rit = { id: Date.now(), datum, type, van, naar, kmStart, kmEind, km: kmEind-kmStart, doel, opmerking };
-  data.ritten.unshift(rit);
-  updateStats(); vulAutocomplete();
-  toon('Rit opgeslagen — ' + rit.km.toLocaleString('nl-NL') + ' km');
-  resetForm();
-  planSync();
-}
-
-function resetForm() {
-  document.getElementById('inp-datum').valueAsDate = new Date();
-  document.getElementById('inp-type').value = 'zakelijk';
-  document.getElementById('inp-van').value = data.instellingen.thuis || '';
-  document.getElementById('inp-naar').value = '';
-  document.getElementById('inp-km-start').value = '';
-  document.getElementById('inp-km-eind').value = '';
-  document.getElementById('inp-doel').value = '';
-  document.getElementById('inp-opmerking').value = '';
-  updateKmDiff();
-}
-
-// Vul het formulier voor met adres (vanuit adresboek)
-function vulVan(naam) {
-  document.getElementById('inp-van').value = naam;
-  switchTab('invoer', document.querySelector('.tab-btn'));
-  toon('"' + naam + '" ingevuld als vertrek');
-}
-function vulNaar(naam) {
-  document.getElementById('inp-naar').value = naam;
-  switchTab('invoer', document.querySelector('.tab-btn'));
-  toon('"' + naam + '" ingevuld als bestemming');
+  updateStats(); planSync();
+  toon(retour ? `Retour geregistreerd: ${r.km*2} km ✓` : `Rit geregistreerd: ${r.km} km ✓`);
+  toonDagSuggesties();
 }
 
 // ============================================================
-// SNELKNOPPEN (vaste ritten)
+// SNELKNOPPEN
 // ============================================================
 function renderSnelknoppen() {
-  const vr = data.vasteRitten || [];
-  const sectie = document.getElementById('snelknoppen-sectie');
-  if (!vr.length) { sectie.innerHTML = ''; return; }
-
-  sectie.innerHTML = `
-    <div class="quick-section-title" style="margin-bottom:0.6rem">Vaste ritten</div>
+  const vr = data.vasteRitten||[];
+  const s = document.getElementById('snelknoppen-sectie');
+  if (!vr.length) { s.innerHTML=''; return; }
+  s.innerHTML = `<div class="section-title" style="margin-bottom:.6rem">Vaste ritten</div>
     <div class="quick-actions" style="margin-bottom:1.5rem">
-      ${vr.map((r, i) => `
-        <div class="quick-btn" onclick="registreerVasteRit(${i}, false)">
+      ${vr.map((r,i)=>`
+        <div class="quick-btn" onclick="registreerVasteRit(${i},false)">
           <div class="qb-label">${r.type} · ${r.km} km</div>
           <div class="qb-route">${r.naam}</div>
-          <div style="font-size:0.72rem;color:var(--text-muted);margin-top:1px">${r.van} → ${r.naar}</div>
-          <div class="qb-badge" onclick="event.stopPropagation(); registreerVasteRit(${i}, true)" title="Registreer retour">⇄ ook retour</div>
+          <div style="font-size:.72rem;color:var(--text-muted);margin-top:1px">${r.van} → ${r.naar}</div>
+          <div class="qb-retour" onclick="event.stopPropagation();registreerVasteRit(${i},true)">⇄ retour (${r.km*2} km)</div>
         </div>`).join('')}
     </div>`;
 }
 
 async function registreerVasteRit(idx, retour) {
-  const vr = data.vasteRitten[idx];
+  const r = data.vasteRitten[idx];
   const datum = document.getElementById('inp-datum').value || new Date().toISOString().slice(0,10);
-
-  // Heen rit — km-standen worden niet bijgehouden bij vaste ritten (alleen km)
-  const heen = {
-    id: Date.now(),
-    datum,
-    type: vr.type,
-    van: vr.van,
-    naar: vr.naar,
-    kmStart: 0, kmEind: vr.km,
-    km: vr.km,
-    doel: vr.doel || vr.naam,
-    opmerking: 'Vaste rit' + (retour ? ' (heen)' : '')
-  };
+  const id = String(r.id||r.naam);
+  const heen = { id:Date.now(), datum, type:r.type, van:r.van, naar:r.naar, kmStart:0, kmEind:r.km, km:r.km, doel:r.doel||r.naam, opmerking:'Vaste rit'+(retour?' (heen)':''), vasteRitId:id };
   data.ritten.unshift(heen);
-
   if (retour) {
-    const terug = {
-      id: Date.now() + 1,
-      datum,
-      type: vr.type,
-      van: vr.naar,
-      naar: vr.van,
-      kmStart: 0, kmEind: vr.km,
-      km: vr.km,
-      doel: vr.doel || vr.naam,
-      opmerking: 'Vaste rit (retour)'
-    };
+    const terug = { id:Date.now()+1, datum, type:r.type, van:r.naar, naar:r.van, kmStart:0, kmEind:r.km, km:r.km, doel:r.doel||r.naam, opmerking:'Vaste rit (retour)', vasteRitId:id };
     data.ritten.unshift(terug);
   }
+  updateStats(); planSync(); toonDagSuggesties();
+  toon(retour ? `Retour: ${r.km*2} km geregistreerd ✓` : `Rit: ${r.km} km geregistreerd ✓`);
+}
 
-  updateStats();
-  planSync();
-  toon(retour ? `Retour geregistreerd: ${vr.km * 2} km` : `Rit geregistreerd: ${vr.km} km`);
+// ============================================================
+// FORM
+// ============================================================
+function updateKmDiff() {
+  const s=parseFloat(document.getElementById('inp-km-start').value), e=parseFloat(document.getElementById('inp-km-eind').value);
+  const el=document.getElementById('km-diff');
+  if (!isNaN(s)&&!isNaN(e)&&e>=s) { el.textContent=(e-s).toLocaleString('nl-NL')+' km'; el.classList.remove('empty'); }
+  else { el.textContent='Vul begin- en eindstand in'; el.classList.add('empty'); }
+}
+async function slaRitOp() {
+  const datum=document.getElementById('inp-datum').value, type=document.getElementById('inp-type').value;
+  const van=document.getElementById('inp-van').value.trim(), naar=document.getElementById('inp-naar').value.trim();
+  const kmStart=parseFloat(document.getElementById('inp-km-start').value), kmEind=parseFloat(document.getElementById('inp-km-eind').value);
+  const doel=document.getElementById('inp-doel').value.trim(), opmerking=document.getElementById('inp-opmerking').value.trim();
+  if (!datum||!van||!naar) { toon('Vul datum, vertrek en bestemming in', true); return; }
+  if (isNaN(kmStart)||isNaN(kmEind)||kmEind<kmStart) { toon('Controleer de km-standen', true); return; }
+  data.ritten.unshift({ id:Date.now(), datum, type, van, naar, kmStart, kmEind, km:kmEind-kmStart, doel, opmerking });
+  updateStats(); vulAutocomplete(); planSync();
+  toon('Rit opgeslagen — '+(kmEind-kmStart).toLocaleString('nl-NL')+' km'); resetForm();
+}
+function resetForm() {
+  document.getElementById('inp-datum').valueAsDate = new Date();
+  document.getElementById('inp-type').value = 'zakelijk';
+  document.getElementById('inp-van').value = data.instellingen.thuis||'';
+  document.getElementById('inp-naar').value=''; document.getElementById('inp-km-start').value='';
+  document.getElementById('inp-km-eind').value=''; document.getElementById('inp-doel').value='';
+  document.getElementById('inp-opmerking').value=''; updateKmDiff();
 }
 
 // ============================================================
 // AUTOCOMPLETE
 // ============================================================
 function vulAutocomplete() {
-  const ritAdressen = [...new Set(data.ritten.flatMap(r => [r.van, r.naar]).filter(Boolean))];
-  const boekAdressen = (data.adressen || []).map(a => a.naam);
-  const alle = [...new Set([...boekAdressen, ...ritAdressen])];
-  const doelen = [...new Set(data.ritten.map(r => r.doel).filter(Boolean))];
-
-  ['adressen-van','adressen-naar'].forEach(id => {
-    document.getElementById(id).innerHTML = alle.map(a => `<option value="${a}">`).join('');
-  });
-  document.getElementById('doelen-list').innerHTML = doelen.map(d => `<option value="${d}">`).join('');
-
-  // Ook voor ww modal
-  const wwLijst = alle.map(a => `<option value="${a}">`).join('');
-  const wvl = document.getElementById('wm-van-list');
-  const wnl = document.getElementById('wm-naar-list');
-  if (wvl) wvl.innerHTML = wwLijst;
-  if (wnl) wnl.innerHTML = wwLijst;
+  const ritAdr=[...new Set(data.ritten.flatMap(r=>[r.van,r.naar]).filter(Boolean))];
+  const boekAdr=(data.adressen||[]).map(a=>a.naam);
+  const alle=[...new Set([...boekAdr,...ritAdr])];
+  const doelen=[...new Set(data.ritten.map(r=>r.doel).filter(Boolean))];
+  ['adressen-van','adressen-naar'].forEach(id=>{ document.getElementById(id).innerHTML=alle.map(a=>`<option value="${a}">`).join(''); });
+  document.getElementById('doelen-list').innerHTML=doelen.map(d=>`<option value="${d}">`).join('');
+  const wwLijst=alle.map(a=>`<option value="${a}">`).join('');
+  ['wm-van-list','wm-naar-list'].forEach(id=>{ const el=document.getElementById(id); if(el)el.innerHTML=wwLijst; });
 }
+function vulVan(naam) { document.getElementById('inp-van').value=naam; switchTab('invoer',document.querySelector('.tab-btn')); toon('"'+naam+'" als vertrek'); }
+function vulNaar(naam) { document.getElementById('inp-naar').value=naam; switchTab('invoer',document.querySelector('.tab-btn')); toon('"'+naam+'" als bestemming'); }
 
 // ============================================================
 // STATS
 // ============================================================
 function updateStats() {
-  const jaar = data.instellingen.jaar || new Date().getFullYear();
-  const jr = data.ritten.filter(r => r.datum?.startsWith(jaar.toString()));
-  const km = jr.reduce((s,r) => s+r.km, 0);
-  document.getElementById('stat-jaar-km').textContent = km.toLocaleString('nl-NL');
-  document.getElementById('stat-ritten').textContent = data.ritten.length.toLocaleString('nl-NL');
+  const jaar=data.instellingen.jaar||new Date().getFullYear();
+  const jr=data.ritten.filter(r=>r.datum?.startsWith(jaar.toString()));
+  document.getElementById('stat-jaar-km').textContent=jr.reduce((s,r)=>s+r.km,0).toLocaleString('nl-NL');
+  document.getElementById('stat-ritten').textContent=data.ritten.length.toLocaleString('nl-NL');
 }
 
 // ============================================================
-// RITTEN PANEL
+// RITTEN
 // ============================================================
 function vulMaandFilter() {
-  const maanden = [...new Set(data.ritten.map(r => r.datum?.slice(0,7)).filter(Boolean))].sort().reverse();
-  const sel = document.getElementById('filter-maand');
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">Alle maanden</option>' + maanden.map(m => {
-    const naam = new Date(m+'-01').toLocaleDateString('nl-NL',{year:'numeric',month:'long'});
-    return `<option value="${m}" ${m===cur?'selected':''}>${naam}</option>`;
-  }).join('');
+  const maanden=[...new Set(data.ritten.map(r=>r.datum?.slice(0,7)).filter(Boolean))].sort().reverse();
+  const sel=document.getElementById('filter-maand'), cur=sel.value;
+  sel.innerHTML='<option value="">Alle maanden</option>'+maanden.map(m=>`<option value="${m}" ${m===cur?'selected':''}>${new Date(m+'-01').toLocaleDateString('nl-NL',{year:'numeric',month:'long'})}</option>`).join('');
 }
-
 function renderRitten() {
-  const zoek = document.getElementById('filter-zoek').value.toLowerCase();
-  const type = document.getElementById('filter-type').value;
-  const maand = document.getElementById('filter-maand').value;
-
-  let gef = data.ritten.filter(r => {
-    if (type && r.type !== type) return false;
-    if (maand && !r.datum?.startsWith(maand)) return false;
-    if (zoek && ![r.van,r.naar,r.doel,r.opmerking].join(' ').toLowerCase().includes(zoek)) return false;
+  const zoek=document.getElementById('filter-zoek').value.toLowerCase();
+  const type=document.getElementById('filter-type').value, maand=document.getElementById('filter-maand').value;
+  let gef=data.ritten.filter(r=>{
+    if (type&&r.type!==type) return false;
+    if (maand&&!r.datum?.startsWith(maand)) return false;
+    if (zoek&&![r.van,r.naar,r.doel,r.opmerking].join(' ').toLowerCase().includes(zoek)) return false;
     return true;
   });
-
-  const totaal = gef.length;
-  const pag = gef.slice((huidigePagina-1)*PER_PAGINA, huidigePagina*PER_PAGINA);
-  const list = document.getElementById('ritten-list');
-
-  if (!totaal) {
-    list.innerHTML = `<div class="empty-state"><div class="icon">🚗</div><p>Geen ritten gevonden.</p></div>`;
-    document.getElementById('pagination').innerHTML = '';
-    return;
-  }
-
-  list.innerHTML = pag.map(r => {
-    const d = new Date(r.datum+'T12:00:00');
-    const dag = d.toLocaleDateString('nl-NL',{day:'2-digit',month:'short'});
-    const badgeClass = r.type === 'woonwerk' ? 'badge-woonwerk' : `badge-${r.type}`;
-    const badgeLabel = r.type === 'woonwerk' ? 'woon-werk' : r.type;
+  const totaal=gef.length, pag=gef.slice((huidigePagina-1)*PER_PAGINA, huidigePagina*PER_PAGINA);
+  const list=document.getElementById('ritten-list');
+  if (!totaal) { list.innerHTML=`<div class="empty-state"><div class="icon">🚗</div><p>Geen ritten gevonden.</p></div>`; document.getElementById('pagination').innerHTML=''; return; }
+  list.innerHTML=pag.map(r=>{
+    const d=new Date(r.datum+'T12:00:00'), dag=d.toLocaleDateString('nl-NL',{day:'2-digit',month:'short'});
+    const bc=r.type==='woonwerk'?'badge-woonwerk':`badge-${r.type}`;
+    const bl=r.type==='woonwerk'?'woon-werk':r.type;
     return `<div class="rit-item ${r.type}">
       <div class="rit-date"><strong>${dag}</strong>${d.getFullYear()}</div>
-      <div class="rit-route">
-        <div class="rit-van-naar">${r.van} → ${r.naar}</div>
-        <div class="rit-doel">${r.doel || r.opmerking || '—'}</div>
-      </div>
-      <div>
-        <div class="rit-km-val">${r.km.toLocaleString('nl-NL')}</div>
-        <div class="rit-km-label">km</div>
-        <span class="rit-badge ${badgeClass}">${badgeLabel}</span>
-      </div>
-      <div class="rit-actions">
-        <button class="btn btn-danger" onclick="verwijderRit(${r.id})">✕</button>
-      </div>
+      <div class="rit-route"><div class="rit-van-naar">${r.van} → ${r.naar}</div><div class="rit-doel">${r.doel||r.opmerking||'—'}</div></div>
+      <div><div class="rit-km-val">${r.km.toLocaleString('nl-NL')}</div><div class="rit-km-label">km</div><span class="rit-badge ${bc}">${bl}</span></div>
+      <div class="rit-actions"><button class="btn btn-danger" onclick="verwijderRit(${r.id})">✕</button></div>
     </div>`;
   }).join('');
-
-  const paginas = Math.ceil(totaal/PER_PAGINA);
-  document.getElementById('pagination').innerHTML = paginas <= 1 ? '' : `
+  const paginas=Math.ceil(totaal/PER_PAGINA);
+  document.getElementById('pagination').innerHTML=paginas<=1?'':`
     <button class="btn btn-ghost" onclick="naarPagina(${huidigePagina-1})" ${huidigePagina===1?'disabled':''}>‹</button>
     <span class="page-info">Pagina ${huidigePagina} van ${paginas}</span>
     <button class="btn btn-ghost" onclick="naarPagina(${huidigePagina+1})" ${huidigePagina===paginas?'disabled':''}>›</button>`;
 }
-
-function naarPagina(p) { huidigePagina = p; renderRitten(); }
-
+function naarPagina(p) { huidigePagina=p; renderRitten(); }
 async function verwijderRit(id) {
   if (!confirm('Deze rit verwijderen?')) return;
-  data.ritten = data.ritten.filter(r => r.id !== id);
-  updateStats(); renderRitten();
-  planSync(); toon('Rit verwijderd');
+  data.ritten=data.ritten.filter(r=>r.id!==id); updateStats(); renderRitten(); planSync(); toon('Rit verwijderd');
 }
 
 // ============================================================
 // RAPPORT
 // ============================================================
 function renderRapport() {
-  const jaar = data.instellingen.jaar || new Date().getFullYear();
-  const verg = data.instellingen.vergoeding || 0.23;
-  const jr = data.ritten.filter(r => r.datum?.startsWith(jaar.toString()));
-  const zak = jr.filter(r=>r.type==='zakelijk').reduce((s,r)=>s+r.km,0);
-  const ww = jr.filter(r=>r.type==='woonwerk').reduce((s,r)=>s+r.km,0);
-  const prv = jr.filter(r=>r.type==='prive').reduce((s,r)=>s+r.km,0);
+  const jaar=data.instellingen.jaar||new Date().getFullYear(), verg=data.instellingen.vergoeding||0.23;
+  const jr=data.ritten.filter(r=>r.datum?.startsWith(jaar.toString()));
+  const zak=jr.filter(r=>r.type==='zakelijk').reduce((s,r)=>s+r.km,0);
+  const ww=jr.filter(r=>r.type==='woonwerk').reduce((s,r)=>s+r.km,0);
+  const prv=jr.filter(r=>r.type==='prive').reduce((s,r)=>s+r.km,0);
+  document.getElementById('rap-zakelijk-jaar').textContent=zak.toLocaleString('nl-NL');
+  document.getElementById('rap-zakelijk-verg').textContent='€ '+(zak*verg).toFixed(2).replace('.',',')+' vergoeding';
+  document.getElementById('rap-woonwerk-jaar').textContent=ww.toLocaleString('nl-NL');
+  document.getElementById('rap-woonwerk-verg').textContent='€ '+(ww*verg).toFixed(2).replace('.',',')+' vergoeding';
+  document.getElementById('rap-totaal-jaar').textContent=(zak+ww+prv).toLocaleString('nl-NL');
+  document.getElementById('rap-ritten-jaar').textContent=jr.length+' ritten';
+  const md={};
+  jr.forEach(r=>{ const m=r.datum.slice(0,7); if(!md[m])md[m]={ritten:0,zakelijk:0,woonwerk:0,prive:0}; md[m].ritten++; if(r.type==='zakelijk')md[m].zakelijk+=r.km; else if(r.type==='woonwerk')md[m].woonwerk+=r.km; else md[m].prive+=r.km; });
+  const tbody=document.getElementById('maand-tbody'), maanden=Object.keys(md).sort().reverse();
+  tbody.innerHTML=!maanden.length?`<tr><td colspan="6" style="color:var(--text-muted);text-align:center;padding:2rem">Geen ritten dit jaar</td></tr>`
+    :maanden.map(m=>{ const d=md[m], naam=new Date(m+'-01').toLocaleDateString('nl-NL',{year:'numeric',month:'long'}), tv=(d.zakelijk+d.woonwerk)*verg;
+      return `<tr><td>${naam}</td><td>${d.ritten}</td><td class="accent">${d.zakelijk.toLocaleString('nl-NL')} km</td><td style="color:var(--warning)">${d.woonwerk.toLocaleString('nl-NL')} km</td><td>${d.prive.toLocaleString('nl-NL')} km</td><td class="accent">€ ${tv.toFixed(2).replace('.',',')}</td></tr>`; }).join('');
+}
 
-  document.getElementById('rap-zakelijk-jaar').textContent = zak.toLocaleString('nl-NL');
-  document.getElementById('rap-zakelijk-vergoeding').textContent = '€ '+(zak*verg).toFixed(2).replace('.',',') + ' vergoeding';
-  document.getElementById('rap-woonwerk-jaar').textContent = ww.toLocaleString('nl-NL');
-  document.getElementById('rap-woonwerk-vergoeding').textContent = '€ '+(ww*verg).toFixed(2).replace('.',',') + ' vergoeding';
-  document.getElementById('rap-totaal-jaar').textContent = (zak+ww+prv).toLocaleString('nl-NL');
-  document.getElementById('rap-ritten-jaar').textContent = jr.length + ' ritten';
+// ============================================================
+// EASYRIT CSV IMPORT
+// ============================================================
+async function verwerkEasyRit() {
+  const file = document.getElementById('easyrit-file').files[0];
+  if (!file) { toon('Kies een CSV bestand', true); return; }
+  const tekst = await file.text();
+  const regels = tekst.split('\n').filter(r=>r.trim());
+  const header = regels[0].split(',');
 
-  const md = {};
-  jr.forEach(r => {
-    const m = r.datum.slice(0,7);
-    if (!md[m]) md[m] = {ritten:0,zakelijk:0,woonwerk:0,prive:0};
-    md[m].ritten++;
-    if (r.type==='zakelijk') md[m].zakelijk+=r.km;
-    else if (r.type==='woonwerk') md[m].woonwerk+=r.km;
-    else md[m].prive+=r.km;
-  });
+  // Kolom indices bepalen
+  const idx = {};
+  header.forEach((h,i) => { idx[h.trim().toLowerCase()] = i; });
 
-  const tbody = document.getElementById('maand-tbody');
-  const maanden = Object.keys(md).sort().reverse();
-  tbody.innerHTML = !maanden.length
-    ? `<tr><td colspan="6" style="color:var(--text-muted);text-align:center;padding:2rem">Geen ritten dit jaar</td></tr>`
-    : maanden.map(m => {
-        const d = md[m];
-        const naam = new Date(m+'-01').toLocaleDateString('nl-NL',{year:'numeric',month:'long'});
-        const totVerg = (d.zakelijk+d.woonwerk)*verg;
-        return `<tr><td>${naam}</td><td>${d.ritten}</td><td class="accent">${d.zakelijk.toLocaleString('nl-NL')} km</td><td style="color:var(--warning)">${d.woonwerk.toLocaleString('nl-NL')} km</td><td>${d.prive.toLocaleString('nl-NL')} km</td><td class="accent">€ ${totVerg.toFixed(2).replace('.',',')}</td></tr>`;
-      }).join('');
+  let toegevoegd=0, overgeslagen=0, fouten=0;
+  const bestaand = new Set(data.ritten.map(r => r.easyritId || ''));
+
+  for (let i=1; i<regels.length; i++) {
+    try {
+      // CSV parsen — rekening houden met komma's in geciteerde velden
+      const cols = parseCSVRegel(regels[i]);
+      if (cols.length < 8) { fouten++; continue; }
+
+      const vertrektijd = cols[idx['vertrektijd']]?.trim();
+      if (!vertrektijd) { fouten++; continue; }
+
+      // Datum uit vertrektijd halen (formaat: 2026-06-22 17:35)
+      const datum = vertrektijd.slice(0,10);
+      const beginstand = parseFloat(cols[idx['beginstand']]);
+      const eindstand = parseFloat(cols[idx['eindstand']]);
+      const afstand = parseFloat(cols[idx['afstand']]);
+      const categorie = cols[idx['categorie']]?.trim().toLowerCase();
+      const vertrek = cols[idx['vertreklocatie']]?.trim().replace(/^"|"$/g,'');
+      const bestemming = cols[idx['eindbestemming']]?.trim().replace(/^"|"$/g,'');
+      const kenteken = cols[idx['kenteken']]?.trim();
+      const voertuig = cols[idx['voertuig']]?.trim();
+
+      if (isNaN(afstand)||afstand<=0||!datum||!vertrek||!bestemming) { fouten++; continue; }
+
+      const easyritId = `${vertrektijd}-${beginstand}-${eindstand}`;
+      if (bestaand.has(easyritId)) { overgeslagen++; continue; }
+
+      const type = categorie==='zakelijk' ? 'zakelijk' : categorie==='prive' ? 'prive' : 'zakelijk';
+
+      data.ritten.push({
+        id: Date.now() + i,
+        datum,
+        type,
+        van: vertrek,
+        naar: bestemming,
+        kmStart: isNaN(beginstand)?0:beginstand,
+        kmEind: isNaN(eindstand)?0:eindstand,
+        km: afstand,
+        doel: '',
+        opmerking: voertuig ? `${kenteken} – ${voertuig}` : '',
+        easyritId
+      });
+      bestaand.add(easyritId);
+      toegevoegd++;
+    } catch(e) { fouten++; }
+  }
+
+  // Sorteren op datum
+  data.ritten.sort((a,b) => new Date(b.datum)-new Date(a.datum));
+  updateStats(); vulAutocomplete();
+  await slaOpGithub(false);
+
+  document.getElementById('import-result').innerHTML = `
+    <div class="import-result">
+      <strong>${toegevoegd}</strong> ritten geïmporteerd uit EasyRit<br>
+      ${overgeslagen} al aanwezig (overgeslagen)<br>
+      ${fouten>0?`${fouten} regels konden niet worden gelezen`:''}
+    </div>`;
+  toon(`${toegevoegd} ritten geïmporteerd ✓`);
+}
+
+function parseCSVRegel(regel) {
+  const cols=[], n=regel.length;
+  let i=0, inQuote=false, veld='';
+  while (i<n) {
+    const c=regel[i];
+    if (c==='"') { inQuote=!inQuote; }
+    else if (c===','&&!inQuote) { cols.push(veld); veld=''; }
+    else { veld+=c; }
+    i++;
+  }
+  cols.push(veld);
+  return cols;
 }
 
 // ============================================================
 // ADRESBOEK
 // ============================================================
 function renderAdresboek() {
-  // Vaste ritten
-  const vr = data.vasteRitten || [];
-  const wwEl = document.getElementById('ww-lijst');
-  wwEl.innerHTML = !vr.length
-    ? '<p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.75rem">Nog geen vaste ritten. Voeg er een toe!</p>'
-    : vr.map((r,i) => `
-      <div class="ww-card">
+  const vr=data.vasteRitten||[];
+  const catIcon={werk:'🏢',klant:'👤',thuis:'🏠',overig:'📍'};
+  const catTag={werk:'tag-werk',klant:'tag-klant',thuis:'tag-thuis',overig:'tag-overig'};
+  const catLabel={werk:'Werk',klant:'Klant',thuis:'Thuis',overig:'Overig'};
+
+  document.getElementById('ww-lijst').innerHTML=!vr.length
+    ?'<p style="font-size:.8rem;color:var(--text-muted);margin-bottom:.75rem">Nog geen vaste ritten</p>'
+    :vr.map((r,i)=>`<div class="ww-card">
         <div style="font-size:1.5rem">🔁</div>
         <div class="ww-info">
           <div class="ww-naam">${r.naam}</div>
-          <div class="ww-detail">${r.van} → ${r.naar} · ${r.type}</div>
-          ${r.doel ? `<div class="ww-detail">${r.doel}</div>` : ''}
+          <div class="ww-detail">${r.van} → ${r.naar} · ${r.km} km · ${r.type}</div>
+          ${r.dagen&&r.dagen.length?`<div class="ww-days">📅 ${r.dagen.map(d=>DAGEN[d]).join(', ')}</div>`:''}
         </div>
         <div class="ww-km">${r.km} km</div>
         <div class="ww-actions">
@@ -968,17 +939,10 @@ function renderAdresboek() {
         </div>
       </div>`).join('');
 
-  // Locaties
-  const adr = data.adressen || [];
-  const grid = document.getElementById('adres-grid');
-  const catIcon = {werk:'🏢', klant:'👤', thuis:'🏠', overig:'📍'};
-  const catTag = {werk:'tag-werk', klant:'tag-klant', thuis:'tag-thuis', overig:'tag-overig'};
-  const catLabel = {werk:'Werk', klant:'Klant', thuis:'Thuis', overig:'Overig'};
-
-  grid.innerHTML = !adr.length
-    ? '<p style="font-size:0.8rem;color:var(--text-muted);grid-column:1/-1">Nog geen locaties. Voeg er een toe!</p>'
-    : adr.map((a,i) => `
-      <div class="adres-card">
+  const adr=data.adressen||[];
+  document.getElementById('adres-grid').innerHTML=!adr.length
+    ?'<p style="font-size:.8rem;color:var(--text-muted);grid-column:1/-1">Nog geen locaties</p>'
+    :adr.map((a,i)=>`<div class="adres-card">
         <div class="adres-icon">${catIcon[a.cat]||'📍'}</div>
         <div class="adres-info">
           <div class="adres-naam">${a.naam}</div>
@@ -994,218 +958,160 @@ function renderAdresboek() {
       </div>`).join('');
 }
 
+// --- Dag knoppen in modal ---
+function renderDagKnoppen() {
+  const container=document.getElementById('dag-knoppen');
+  if (!container) return;
+  container.innerHTML=DAGEN.map((d,i)=>`
+    <button type="button" id="dag-${i}" onclick="toggleDag(${i})"
+      style="padding:.35rem .7rem;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-family:var(--mono);font-size:.75rem;cursor:pointer;transition:all .2s">
+      ${d}
+    </button>`).join('');
+}
+function toggleDag(i) {
+  if (geselecteerdeDagen.includes(i)) geselecteerdeDagen=geselecteerdeDagen.filter(d=>d!==i);
+  else geselecteerdeDagen.push(i);
+  DAGEN.forEach((_,j)=>{
+    const btn=document.getElementById('dag-'+j);
+    if (!btn) return;
+    const sel=geselecteerdeDagen.includes(j);
+    btn.style.background=sel?'rgba(200,245,61,.15)':'var(--surface2)';
+    btn.style.color=sel?'var(--accent)':'var(--text-muted)';
+    btn.style.borderColor=sel?'rgba(200,245,61,.5)':'var(--border)';
+  });
+}
+
 // --- Adres modal ---
-function openAdresModal(idx = null) {
-  adresEditIdx = idx;
-  const modal = document.getElementById('adres-modal');
-  document.getElementById('adres-modal-titel').textContent = idx !== null ? 'Locatie bewerken' : 'Locatie toevoegen';
-  if (idx !== null) {
-    const a = data.adressen[idx];
-    document.getElementById('am-naam').value = a.naam;
-    document.getElementById('am-adres').value = a.adres||'';
-    document.getElementById('am-cat').value = a.cat||'overig';
-  } else {
-    document.getElementById('am-naam').value = '';
-    document.getElementById('am-adres').value = '';
-    document.getElementById('am-cat').value = 'werk';
-  }
-  modal.style.display = 'flex';
+function openAdresModal(idx=null) {
+  adresEditIdx=idx;
+  document.getElementById('adres-modal-titel').textContent=idx!==null?'Locatie bewerken':'Locatie toevoegen';
+  if (idx!==null) { const a=data.adressen[idx]; document.getElementById('am-naam').value=a.naam; document.getElementById('am-adres').value=a.adres||''; document.getElementById('am-cat').value=a.cat||'overig'; }
+  else { document.getElementById('am-naam').value=''; document.getElementById('am-adres').value=''; document.getElementById('am-cat').value='werk'; }
+  document.getElementById('adres-modal').style.display='flex';
 }
-
-function sluitAdresModal() {
-  document.getElementById('adres-modal').style.display = 'none';
-}
-
 async function slaAdresOp() {
-  const naam = document.getElementById('am-naam').value.trim();
+  const naam=document.getElementById('am-naam').value.trim();
   if (!naam) { toon('Voer een naam in', true); return; }
-  const adres = { naam, adres: document.getElementById('am-adres').value.trim(), cat: document.getElementById('am-cat').value };
-  if (!data.adressen) data.adressen = [];
-  if (adresEditIdx !== null) data.adressen[adresEditIdx] = adres;
-  else data.adressen.push(adres);
-  sluitAdresModal();
-  vulAutocomplete();
-  renderAdresboek();
-  planSync();
-  toon('Locatie opgeslagen');
+  const adres={naam, adres:document.getElementById('am-adres').value.trim(), cat:document.getElementById('am-cat').value};
+  if (!data.adressen) data.adressen=[];
+  if (adresEditIdx!==null) data.adressen[adresEditIdx]=adres; else data.adressen.push(adres);
+  sluitModal('adres-modal'); vulAutocomplete(); renderAdresboek(); planSync(); toon('Locatie opgeslagen');
 }
-
 async function verwijderAdres(i) {
   if (!confirm('Locatie verwijderen?')) return;
-  data.adressen.splice(i, 1);
-  renderAdresboek(); vulAutocomplete(); planSync(); toon('Locatie verwijderd');
+  data.adressen.splice(i,1); renderAdresboek(); vulAutocomplete(); planSync(); toon('Locatie verwijderd');
 }
 
 // --- Vaste rit modal ---
-function openWwModal(idx = null) {
-  wwEditIdx = idx;
-  document.getElementById('ww-modal-titel').textContent = idx !== null ? 'Vaste rit bewerken' : 'Vaste rit toevoegen';
-  if (idx !== null) {
-    const r = data.vasteRitten[idx];
-    document.getElementById('wm-naam').value = r.naam;
-    document.getElementById('wm-van').value = r.van;
-    document.getElementById('wm-naar').value = r.naar;
-    document.getElementById('wm-km').value = r.km;
-    document.getElementById('wm-type').value = r.type;
-    document.getElementById('wm-doel').value = r.doel||'';
+function openWwModal(idx=null) {
+  wwEditIdx=idx;
+  geselecteerdeDagen=[];
+  document.getElementById('ww-modal-titel').textContent=idx!==null?'Vaste rit bewerken':'Vaste rit toevoegen';
+  if (idx!==null) {
+    const r=data.vasteRitten[idx];
+    document.getElementById('wm-naam').value=r.naam;
+    document.getElementById('wm-van').value=r.van;
+    document.getElementById('wm-naar').value=r.naar;
+    document.getElementById('wm-km').value=r.km;
+    document.getElementById('wm-type').value=r.type;
+    document.getElementById('wm-doel').value=r.doel||'';
+    geselecteerdeDagen=[...(r.dagen||[])];
   } else {
-    document.getElementById('wm-naam').value = '';
-    document.getElementById('wm-van').value = data.instellingen.thuis||'';
-    document.getElementById('wm-naar').value = '';
-    document.getElementById('wm-km').value = '';
-    document.getElementById('wm-type').value = 'woonwerk';
-    document.getElementById('wm-doel').value = '';
+    document.getElementById('wm-naam').value='';
+    document.getElementById('wm-van').value=data.instellingen.thuis||'';
+    document.getElementById('wm-naar').value='';
+    document.getElementById('wm-km').value='';
+    document.getElementById('wm-type').value='zakelijk';
+    document.getElementById('wm-doel').value='';
   }
+  renderDagKnoppen();
+  geselecteerdeDagen.forEach(d=>toggleDag(d));
   vulAutocomplete();
-  document.getElementById('ww-modal').style.display = 'flex';
+  document.getElementById('ww-modal').style.display='flex';
 }
-
-function sluitWwModal() {
-  document.getElementById('ww-modal').style.display = 'none';
-}
-
 async function slaVasteRitOp() {
-  const naam = document.getElementById('wm-naam').value.trim();
-  const van = document.getElementById('wm-van').value.trim();
-  const naar = document.getElementById('wm-naar').value.trim();
-  const km = parseFloat(document.getElementById('wm-km').value);
-  if (!naam || !van || !naar || isNaN(km) || km <= 0) { toon('Vul alle velden in', true); return; }
-  const rit = { naam, van, naar, km, type: document.getElementById('wm-type').value, doel: document.getElementById('wm-doel').value.trim() };
-  if (!data.vasteRitten) data.vasteRitten = [];
-  if (wwEditIdx !== null) data.vasteRitten[wwEditIdx] = rit;
-  else data.vasteRitten.push(rit);
-  sluitWwModal();
-  renderSnelknoppen();
-  renderAdresboek();
-  planSync();
-  toon('Vaste rit opgeslagen');
+  const naam=document.getElementById('wm-naam').value.trim(), van=document.getElementById('wm-van').value.trim(), naar=document.getElementById('wm-naar').value.trim();
+  const km=parseFloat(document.getElementById('wm-km').value);
+  if (!naam||!van||!naar||isNaN(km)||km<=0) { toon('Vul alle velden in', true); return; }
+  const rit={ id:Date.now(), naam, van, naar, km, type:document.getElementById('wm-type').value, doel:document.getElementById('wm-doel').value.trim(), dagen:[...geselecteerdeDagen] };
+  if (!data.vasteRitten) data.vasteRitten=[];
+  if (wwEditIdx!==null) data.vasteRitten[wwEditIdx]=rit; else data.vasteRitten.push(rit);
+  sluitModal('ww-modal'); renderSnelknoppen(); renderAdresboek(); toonDagSuggesties(); planSync(); toon('Vaste rit opgeslagen');
 }
-
 async function verwijderVasteRit(i) {
   if (!confirm('Vaste rit verwijderen?')) return;
-  data.vasteRitten.splice(i, 1);
-  renderSnelknoppen(); renderAdresboek(); planSync(); toon('Vaste rit verwijderd');
+  data.vasteRitten.splice(i,1); renderSnelknoppen(); renderAdresboek(); planSync(); toon('Vaste rit verwijderd');
 }
 
 // ============================================================
-// EXPORT
+// EXPORT / IMPORT
 // ============================================================
 function exportCSV() {
-  const jaar = data.instellingen.jaar || new Date().getFullYear();
-  const ritten = data.ritten.filter(r => r.datum?.startsWith(jaar.toString()));
+  const jaar=data.instellingen.jaar||new Date().getFullYear();
+  const ritten=data.ritten.filter(r=>r.datum?.startsWith(jaar.toString()));
   if (!ritten.length) { toon('Geen ritten om te exporteren'); return; }
-  const headers = ['Datum','Type','Vertrek','Bestemming','Beginstand','Eindstand','Kilometers','Doel','Opmerking'];
-  const rows = ritten.map(r => [r.datum,r.type,`"${r.van}"`,`"${r.naar}"`,r.kmStart,r.kmEind,r.km,`"${r.doel||''}"`,`"${r.opmerking||''}"`]);
-  download(`kmlog_${jaar}.csv`, [headers.join(';'),...rows.map(r=>r.join(';'))].join('\n'), 'text/csv;charset=utf-8;');
+  const headers=['Datum','Type','Vertrek','Bestemming','Beginstand','Eindstand','Kilometers','Doel','Opmerking'];
+  const rows=ritten.map(r=>[r.datum,r.type,`"${r.van}"`,`"${r.naar}"`,r.kmStart,r.kmEind,r.km,`"${r.doel||''}"`,`"${r.opmerking||''}"`]);
+  download(`kmlog_${jaar}.csv`,[headers.join(';'),...rows.map(r=>r.join(';'))].join('\n'),'text/csv;charset=utf-8;');
   toon('CSV geëxporteerd');
 }
-
-function exportJSON() {
-  download('kmlog_backup_'+Date.now()+'.json', JSON.stringify(data,null,2), 'application/json');
-  toon('Backup opgeslagen');
-}
-
-function importJSON() { document.getElementById('import-file').click(); }
-
-function verwerkImport(e) {
-  const file = e.target.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async ev => {
-    try {
-      const imp = JSON.parse(ev.target.result);
-      if (!imp.ritten) { toon('Ongeldig bestand', true); return; }
-      const bestaand = new Set(data.ritten.map(r=>r.id));
-      const nieuw = imp.ritten.filter(r=>!bestaand.has(r.id));
-      data.ritten = [...data.ritten,...nieuw].sort((a,b)=>new Date(b.datum)-new Date(a.datum));
-      updateUI(); await slaOpGithub(false);
-      toon(nieuw.length + ' ritten geïmporteerd ✓');
-    } catch { toon('Fout bij inlezen', true); }
-  };
+function exportJSON() { download('kmlog_backup_'+Date.now()+'.json',JSON.stringify(data,null,2),'application/json'); toon('Backup opgeslagen'); }
+function importJSON() { document.getElementById('import-json-file').click(); }
+async function verwerkJsonImport(e) {
+  const file=e.target.files[0]; if (!file) return;
+  const reader=new FileReader();
+  reader.onload=async ev=>{ try { const imp=JSON.parse(ev.target.result); if (!imp.ritten){toon('Ongeldig bestand',true);return;} const bestaand=new Set(data.ritten.map(r=>r.id)); const nieuw=imp.ritten.filter(r=>!bestaand.has(r.id)); data.ritten=[...data.ritten,...nieuw].sort((a,b)=>new Date(b.datum)-new Date(a.datum)); updateUI(); await slaOpGithub(false); toon(nieuw.length+' ritten geïmporteerd ✓'); } catch{toon('Fout bij inlezen',true);} };
   reader.readAsText(file); e.target.value='';
 }
-
-function download(naam, inhoud, type) {
-  const a = Object.assign(document.createElement('a'), {href:URL.createObjectURL(new Blob([inhoud],{type})), download:naam});
-  a.click(); URL.revokeObjectURL(a.href);
-}
+function download(naam,inhoud,type) { const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([inhoud],{type})),download:naam}); a.click(); URL.revokeObjectURL(a.href); }
 
 // ============================================================
 // INSTELLINGEN
 // ============================================================
 function laadInstellingenUI() {
-  const s = data.instellingen;
-  document.getElementById('set-naam').value = s.naam||'';
-  document.getElementById('set-kvk').value = s.kvk||'';
-  document.getElementById('set-btw').value = s.btw||'';
-  document.getElementById('set-thuis').value = s.thuis||'';
-  document.getElementById('set-vergoeding').value = s.vergoeding||0.23;
-  document.getElementById('set-jaar').value = s.jaar||new Date().getFullYear();
-  document.getElementById('set-token').value = githubToken ? '••••••••••••••••' : '';
-  document.getElementById('set-github-info').value = GITHUB_USER+'/'+GITHUB_REPO;
+  const s=data.instellingen;
+  document.getElementById('set-naam').value=s.naam||''; document.getElementById('set-kvk').value=s.kvk||'';
+  document.getElementById('set-btw').value=s.btw||''; document.getElementById('set-thuis').value=s.thuis||'';
+  document.getElementById('set-vergoeding').value=s.vergoeding||0.23; document.getElementById('set-jaar').value=s.jaar||new Date().getFullYear();
+  document.getElementById('set-token').value=githubToken?'••••••••••••••••':'';
+  document.getElementById('set-github-info').value=GITHUB_USER+'/'+GITHUB_REPO;
   renderAutos();
 }
-
 async function slaInstellingenOp() {
-  data.instellingen.naam = document.getElementById('set-naam').value;
-  data.instellingen.kvk = document.getElementById('set-kvk').value;
-  data.instellingen.btw = document.getElementById('set-btw').value;
-  data.instellingen.thuis = document.getElementById('set-thuis').value;
-  data.instellingen.vergoeding = parseFloat(document.getElementById('set-vergoeding').value)||0.23;
-  data.instellingen.jaar = parseInt(document.getElementById('set-jaar').value)||new Date().getFullYear();
+  data.instellingen.naam=document.getElementById('set-naam').value; data.instellingen.kvk=document.getElementById('set-kvk').value;
+  data.instellingen.btw=document.getElementById('set-btw').value; data.instellingen.thuis=document.getElementById('set-thuis').value;
+  data.instellingen.vergoeding=parseFloat(document.getElementById('set-vergoeding').value)||0.23;
+  data.instellingen.jaar=parseInt(document.getElementById('set-jaar').value)||new Date().getFullYear();
   updateStats(); await slaOpGithub(true);
 }
-
 function renderAutos() {
-  const autos = data.autos||[];
-  document.getElementById('autos-list').innerHTML = !autos.length
-    ? '<p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:.5rem">Nog geen voertuigen</p>'
-    : autos.map((a,i) => `<div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem;padding:.5rem .75rem;background:var(--surface2);border-radius:8px;">
-        <span style="font-family:var(--mono);color:var(--accent);font-size:.85rem">${a.kenteken}</span>
-        <span style="font-size:.8rem;color:var(--text-mid);flex:1">${a.omschrijving}</span>
-        <button class="btn btn-danger" onclick="verwijderAuto(${i})">✕</button>
-      </div>`).join('');
+  const autos=data.autos||[];
+  document.getElementById('autos-list').innerHTML=!autos.length?'<p style="font-size:.8rem;color:var(--text-muted);margin-bottom:.5rem">Nog geen voertuigen</p>'
+    :autos.map((a,i)=>`<div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem;padding:.5rem .75rem;background:var(--surface2);border-radius:8px;"><span style="font-family:var(--mono);color:var(--accent);font-size:.85rem">${a.kenteken}</span><span style="font-size:.8rem;color:var(--text-mid);flex:1">${a.omschrijving}</span><button class="btn btn-danger" onclick="verwijderAuto(${i})">✕</button></div>`).join('');
 }
-
 async function voegAutoToe() {
-  const k = document.getElementById('auto-kenteken').value.trim().toUpperCase();
-  const o = document.getElementById('auto-omschrijving').value.trim();
-  if (!k) { toon('Vul een kenteken in', true); return; }
-  if (!data.autos) data.autos = [];
-  data.autos.push({kenteken:k, omschrijving:o});
-  document.getElementById('auto-kenteken').value='';
-  document.getElementById('auto-omschrijving').value='';
+  const k=document.getElementById('auto-kenteken').value.trim().toUpperCase(), o=document.getElementById('auto-omschrijving').value.trim();
+  if (!k){toon('Vul een kenteken in',true);return;} if(!data.autos)data.autos=[];
+  data.autos.push({kenteken:k,omschrijving:o}); document.getElementById('auto-kenteken').value=''; document.getElementById('auto-omschrijving').value='';
   renderAutos(); planSync(); toon('Auto toegevoegd');
 }
-
-async function verwijderAuto(i) {
-  data.autos.splice(i,1); renderAutos(); planSync();
-}
-
+async function verwijderAuto(i) { data.autos.splice(i,1); renderAutos(); planSync(); }
 async function verwijderAlles() {
-  if (!confirm('Alle data verwijderen? Dit kan niet ongedaan worden gemaakt.')) return;
-  if (!confirm('Laatste waarschuwing.')) return;
-  data = {ritten:[], instellingen:defaultInst(), autos:[], adressen:[], vasteRitten:[]};
-  fileSha = null; updateUI(); await slaOpGithub(false); toon('Alle data verwijderd');
+  if (!confirm('Alle data verwijderen?')) return; if (!confirm('Laatste waarschuwing.')) return;
+  data={ritten:[],instellingen:defaultInst(),autos:[],adressen:[],vasteRitten:[]}; fileSha=null; updateUI(); await slaOpGithub(false); toon('Alle data verwijderd');
 }
 
 // ============================================================
-// TOAST
+// MODALS & TOAST
 // ============================================================
+function sluitModal(id) { document.getElementById(id).style.display='none'; }
+document.addEventListener('click', e=>{ if(e.target.classList.contains('modal-overlay')) { sluitModal('adres-modal'); sluitModal('ww-modal'); sluitModal('import-modal'); } });
 let toastTimer;
 function toon(bericht, isFout=false) {
-  const t = document.getElementById('toast');
-  t.textContent = bericht;
-  t.className = 'toast' + (isFout?' fout':'') + ' show';
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>t.classList.remove('show'), 2800);
+  const t=document.getElementById('toast'); t.textContent=bericht;
+  t.className='toast'+(isFout?' fout':'')+' show';
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
 }
-
-// Sluit modals bij klik buiten
-document.addEventListener('click', e => {
-  if (e.target.classList.contains('modal-overlay')) {
-    sluitAdresModal(); sluitWwModal();
-  }
-});
 </script>
 </body>
 </html>
