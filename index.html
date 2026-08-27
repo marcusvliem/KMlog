@@ -714,7 +714,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '7.1.0';
+const APP_VERSION = '7.2.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1437,8 +1437,12 @@ function renderRitten(){
   const list=document.getElementById('rit-list');
   if(!tot){list.innerHTML=`<div class="empty"><div class="empty-icon">🚗</div>Geen ritten gevonden.</div>`;document.getElementById('pager').innerHTML='';return;}
   // Bouw een set van datums met meerdere ritten (voor pijltjes)
-  const dagtelling = {};
-  gef.forEach(r => { dagtelling[r.datum] = (dagtelling[r.datum]||0)+1; });
+  // Bouw opzoektabel: per voertuig, wat is de eindstand van de vorige KTM rit?
+  const kt = data.instellingen.standaardVoertuig||'';
+  // Gesorteerde KTM ritten voor sequentie-check
+  const ktGesorteerd = data.ritten
+    .filter(r=>r.opmerking?.includes(kt) && r.kmEind>0)
+    .sort((a,b)=>a.datum<b.datum?-1:a.datum>b.datum?1:a.id-b.id);
 
   list.innerHTML=slice.map((r,sliceIdx)=>{
     const d=new Date(r.datum+'T12:00:00'),dag=d.toLocaleDateString('nl-NL',{day:'2-digit',month:'short'});
@@ -1446,17 +1450,28 @@ function renderRitten(){
     const isRetour = r.opmerking?.toLowerCase().includes('retour') || r.doel?.toLowerCase().includes('retour');
     const retourBadge = isRetour ? `<span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:rgba(100,160,255,.12);color:var(--info);letter-spacing:.04em;margin-left:4px">⇄ retour</span>` : '';
     const heeftMeerdere = dagtelling[r.datum] > 1;
-    // Zoek positie in de volledige gefilterde lijst
     const gefIdx = gef.findIndex(x=>x.id===r.id);
     const kanOmhoog = heeftMeerdere && gefIdx > 0 && gef[gefIdx-1].datum === r.datum;
     const kanOmlaag = heeftMeerdere && gefIdx < gef.length-1 && gef[gefIdx+1].datum === r.datum;
     const pijltjes = heeftMeerdere ? `
       <button class="btn btn-ghost btn-sm rit-del" onclick="verschuifRit(${r.id},-1)" title="Omhoog" style="font-size:11px;padding:4px 6px;opacity:${kanOmhoog?'1':'0.25'}" ${kanOmhoog?'':'disabled'}>↑</button>
       <button class="btn btn-ghost btn-sm rit-del" onclick="verschuifRit(${r.id},+1)" title="Omlaag" style="font-size:11px;padding:4px 6px;opacity:${kanOmlaag?'1':'0.25'}" ${kanOmlaag?'':'disabled'}>↓</button>` : '';
+
+    // Begin/eindstand weergave + sequentie-check
+    let standHtml = '';
+    if(r.kmEind > 0 && r.opmerking?.includes(kt)){
+      const ritIdx = ktGesorteerd.findIndex(x=>x.id===r.id);
+      const vorigeEind = ritIdx > 0 ? ktGesorteerd[ritIdx-1].kmEind : null;
+      const klopt = vorigeEind === null || r.kmStart === vorigeEind;
+      const kleur = klopt ? 'var(--success)' : 'var(--danger)';
+      const icoon = klopt ? '' : ' ⚠';
+      standHtml = `<div style="font-family:var(--mono);font-size:10px;color:${kleur};margin-top:3px;text-align:right">${r.kmStart.toLocaleString('nl-NL')} → ${r.kmEind.toLocaleString('nl-NL')}${icoon}</div>`;
+    }
+
     return `<div class="rit ${r.type}">
       <div class="rit-date"><strong>${dag}</strong>${d.getFullYear()}</div>
       <div class="rit-body"><div class="rit-route">${r.van} → ${r.naar}${retourBadge}</div><div class="rit-doel">${r.doel||r.opmerking||'—'}</div></div>
-      <div class="rit-km"><div class="rit-km-val">${r.km.toLocaleString('nl-NL')} km</div><span class="badge badge-${r.type}">${bl}</span></div>
+      <div class="rit-km"><div class="rit-km-val">${r.km.toLocaleString('nl-NL')} km</div><span class="badge badge-${r.type}">${bl}</span>${standHtml}</div>
       <div style="display:flex;gap:4px">
         ${pijltjes}
         <button class="btn btn-ghost btn-sm rit-del" onclick="bewerkRit(${r.id})" title="Bewerken" style="font-size:13px">✎</button>
