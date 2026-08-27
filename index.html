@@ -714,7 +714,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '6.2.0';
+const APP_VERSION = '6.3.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1150,6 +1150,7 @@ function updateRetourLabel(){
     lbl.textContent = '';
   }
 }
+async function slaRitOp(){
   const datum=document.getElementById('inp-datum').value, type=document.getElementById('inp-type').value;
   const van=document.getElementById('inp-van').value.trim(), naar=document.getElementById('inp-naar').value.trim();
   const ks=parseFloat(document.getElementById('inp-start').value), ke=parseFloat(document.getElementById('inp-eind').value);
