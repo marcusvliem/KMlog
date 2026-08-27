@@ -1,1 +1,14 @@
-{"ritten":[],"instellingen":{"naam":"","kvk":"","btw":"","thuis":"","vergoeding":0.23,"jaar":2026},"autos":[]}
+{
+  "ritten": [],
+  "instellingen": {
+    "naam": "Marcus Vliem",
+    "kvk": "68188714",
+    "btw": "NL104634273B01",
+    "thuis": "Molenwindsingel 44 Culemborg",
+    "vergoeding": 0.23,
+    "jaar": 2026
+  },
+  "autos": [],
+  "adressen": [],
+  "vasteRitten": []
+}
