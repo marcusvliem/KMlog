@@ -632,17 +632,36 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
 // ════════════════════════════════════════════
 // CONFIG
 // ════════════════════════════════════════════
-const GOOGLE_API_KEY = 'AIzaSyDcsrcQFOrOAXOrifxVnhippIS-bX_EqKM';
+// ── Storage helpers — werkt ook op file:// ──────────────────
+// localStorage is geblokkeerd op file://, gebruik cookie als fallback
+function opslaanToken(t){
+  try { localStorage.setItem(TOKEN_KEY,t); } catch(e){}
+  try { document.cookie=`${TOKEN_KEY}=${t};max-age=31536000;SameSite=Strict`; } catch(e){}
+}
+function laadToken(){
+  try { const t=localStorage.getItem(TOKEN_KEY); if(t)return t; } catch(e){}
+  try {
+    const m=document.cookie.split(';').find(c=>c.trim().startsWith(TOKEN_KEY+'='));
+    if(m)return m.split('=')[1].trim();
+  } catch(e){}
+  return '';
+}
+function opslaanLokaal(key,val){
+  try { localStorage.setItem(key,val); } catch(e){}
+}
+function laadLokaal(key){
+  try { return localStorage.getItem(key); } catch(e){ return null; }
+}
 let berekendeAfstand = null; // in km, van Google Maps
 const GITHUB_REPO = 'KMlog';
 const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '4.7.0';
+const APP_VERSION = '4.8.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
-let githubToken = localStorage.getItem(TOKEN_KEY)||'';
+let githubToken = laadToken();
 let fileSha = null, syncTimer = null;
 let pagina = 1; const PER_PAGINA = 30;
 let adresEditIdx = null, wwEditIdx = null;
@@ -692,11 +711,11 @@ async function checkUpdate(){
 async function slaGithubConfig(){
   const t=document.getElementById('setup-token').value.trim();
   if(!t){toon('Voer een token in',true);return;}
-  githubToken=t; localStorage.setItem(TOKEN_KEY,t);
+  githubToken=t; opslaanToken(t);
   document.getElementById('setup-modal').style.display='none';
   await laadVanGithub(); checkUpdate();
 }
-function updateToken(){ const t=document.getElementById('set-token').value.trim(); if(!t){toon('Voer een token in',true);return;} githubToken=t; localStorage.setItem(TOKEN_KEY,t); toon('Token bijgewerkt'); }
+function updateToken(){ const t=document.getElementById('set-token').value.trim(); if(!t){toon('Voer een token in',true);return;} githubToken=t; opslaanToken(t); toon('Token bijgewerkt'); }
 function setSS(s,l){ document.getElementById('sync-dot').className='sync-dot '+s; document.getElementById('sync-label').textContent=l; }
 async function ghGet(p){ const r=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${p}`,{headers:{'Authorization':`token ${githubToken}`,'Accept':'application/vnd.github.v3+json'}}); if(r.status===404)return null; if(!r.ok)throw new Error(r.status); return r.json(); }
 async function ghPut(p,content,sha){ const b={message:'KmLog sync '+new Date().toISOString(),content:btoa(unescape(encodeURIComponent(content)))}; if(sha)b.sha=sha; const r=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${p}`,{method:'PUT',headers:{'Authorization':`token ${githubToken}`,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:JSON.stringify(b)}); if(!r.ok)throw new Error(r.status); return r.json(); }
@@ -719,14 +738,14 @@ async function laadVanGithub(){
       await slaOp(false);
     }
     // Sla ook lokaal op als fallback
-    localStorage.setItem(LOCAL_KEY, JSON.stringify(data));
+    opslaanLokaal(LOCAL_KEY, JSON.stringify(data));
     updateUI();
     setSS('ok','gesynchroniseerd');
     resetForm();
   } catch(e){
     setSS('error','sync fout');
     // Probeer lokale cache
-    const l=localStorage.getItem(LOCAL_KEY);
+    const l=laadLokaal(LOCAL_KEY);
     if(l){
       try {
         data={adressen:[],vasteRitten:[],autos:[],...JSON.parse(l)};
@@ -743,8 +762,8 @@ async function laadVanGithub(){
 }
 async function slaOp(msg=true){
   if(!githubToken)return; setSS('syncing','opslaan…');
-  try { const j=JSON.stringify(data,null,2),r=await ghPut(DATA_FILE,j,fileSha); fileSha=r.content.sha; localStorage.setItem(LOCAL_KEY,j); setSS('ok','gesynchroniseerd'); if(msg)toon('Gesynchroniseerd'); }
-  catch(e){ setSS('error','sync fout'); localStorage.setItem(LOCAL_KEY,JSON.stringify(data)); toon('Lokaal opgeslagen',true); }
+  try { const j=JSON.stringify(data,null,2),r=await ghPut(DATA_FILE,j,fileSha); fileSha=r.content.sha; opslaanLokaal(LOCAL_KEY,j); setSS('ok','gesynchroniseerd'); if(msg)toon('Gesynchroniseerd'); }
+  catch(e){ setSS('error','sync fout'); opslaanLokaal(LOCAL_KEY,JSON.stringify(data)); toon('Lokaal opgeslagen',true); }
 }
 async function syncNu(){ await laadVanGithub(); toon('Gesynchroniseerd'); }
 async function forceerSync(){ await slaOp(true); }
