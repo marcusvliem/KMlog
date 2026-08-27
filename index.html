@@ -714,7 +714,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '6.8.0';
+const APP_VERSION = '6.9.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1451,8 +1451,8 @@ function renderRitten(){
     const kanOmhoog = heeftMeerdere && gefIdx > 0 && gef[gefIdx-1].datum === r.datum;
     const kanOmlaag = heeftMeerdere && gefIdx < gef.length-1 && gef[gefIdx+1].datum === r.datum;
     const pijltjes = heeftMeerdere ? `
-      <button class="btn btn-ghost btn-sm rit-del" onclick="verschuifRit(${r.id},-1)" title="Omhoog" style="font-size:11px;padding:4px 6px" ${kanOmhoog?'':'disabled style="opacity:.2;font-size:11px;padding:4px 6px"'}>↑</button>
-      <button class="btn btn-ghost btn-sm rit-del" onclick="verschuifRit(${r.id},+1)" title="Omlaag" style="font-size:11px;padding:4px 6px" ${kanOmlaag?'':'disabled style="opacity:.2;font-size:11px;padding:4px 6px"'}>↓</button>` : '';
+      <button class="btn btn-ghost btn-sm rit-del" onclick="verschuifRit(${r.id},-1)" title="Omhoog" style="font-size:11px;padding:4px 6px;opacity:${kanOmhoog?'1':'0.25'}" ${kanOmhoog?'':'disabled'}>↑</button>
+      <button class="btn btn-ghost btn-sm rit-del" onclick="verschuifRit(${r.id},+1)" title="Omlaag" style="font-size:11px;padding:4px 6px;opacity:${kanOmlaag?'1':'0.25'}" ${kanOmlaag?'':'disabled'}>↓</button>` : '';
     return `<div class="rit ${r.type}">
       <div class="rit-date"><strong>${dag}</strong>${d.getFullYear()}</div>
       <div class="rit-body"><div class="rit-route">${r.van} → ${r.naar}${retourBadge}</div><div class="rit-doel">${r.doel||r.opmerking||'—'}</div></div>
@@ -1474,27 +1474,25 @@ function renderRitten(){
 function goPag(p){pagina=p;renderRitten();}
 
 function verschuifRit(id, richting){
-  // Zoek de rit en zijn buur op dezelfde datum
   const idx = data.ritten.findIndex(r=>r.id===id);
   if(idx === -1) return;
   const datum = data.ritten[idx].datum;
 
-  // Zoek de buurrit op dezelfde datum in de gewenste richting
+  // data.ritten[0] = meest recent. "Omhoog" in scherm = eerder op de dag = hogere index in array
+  // richting -1 = omhoog in scherm = zoek naar hogere index (oudere rit zelfde dag)
+  // richting +1 = omlaag in scherm = zoek naar lagere index (nieuwere rit zelfde dag)
   let buurIdx = -1;
   if(richting === -1){
-    // Omhoog = eerder in de array (hogere index = ouder in gesorteerde lijst)
     for(let i=idx+1; i<data.ritten.length; i++){
       if(data.ritten[i].datum === datum){ buurIdx = i; break; }
     }
   } else {
-    // Omlaag = later in de array
     for(let i=idx-1; i>=0; i--){
       if(data.ritten[i].datum === datum){ buurIdx = i; break; }
     }
   }
   if(buurIdx === -1) return;
 
-  // Wissel de twee ritten
   [data.ritten[idx], data.ritten[buurIdx]] = [data.ritten[buurIdx], data.ritten[idx]];
   planSync();
   renderRitten();
