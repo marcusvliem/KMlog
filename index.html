@@ -707,7 +707,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '5.6.0';
+const APP_VERSION = '5.7.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -980,13 +980,10 @@ function toonSuggesties(){
 }
 async function bevestigSug(naam,retour){
   const r=(data.vasteRitten||[]).find(v=>v.naam===naam); if(!r)return;
-  // altijdRetour overschrijft de keuze
   if(r.altijdRetour) retour=true;
-  const datum=new Date().toISOString().slice(0,10), id=String(r.id||r.naam);
-  data.ritten.unshift({id:Date.now(),datum,type:r.type,van:r.van,naar:r.naar,kmStart:0,kmEind:r.km,km:r.km,doel:r.doel||r.naam,opmerking:'Vaste rit'+(retour?' (heen)':''),vasteRitId:id});
-  if(retour) data.ritten.unshift({id:Date.now()+1,datum,type:r.type,van:r.naar,naar:r.van,kmStart:0,kmEind:r.km,km:r.km,doel:r.doel||r.naam,opmerking:'Vaste rit (retour)',vasteRitId:id});
-  updateStats(); planSync(); toonSuggesties();
-  toon(retour?`Retour: ${r.km*2} km ✓`:`Rit: ${r.km} km ✓`);
+  const idx=(data.vasteRitten||[]).findIndex(v=>v.naam===naam);
+  document.getElementById('suggestie-container').innerHTML='';
+  regVaste(idx, retour);
 }
 
 // ════════════════════════════════════════════
@@ -1006,16 +1003,47 @@ function renderSnelknoppen(){
       </div>`).join('')}
     </div>`;
 }
+
+// ════════════════════════════════════════════
 async function regVaste(idx,retour){
   const r=data.vasteRitten[idx];
   if(r.altijdRetour) retour=true;
-  const datum=document.getElementById('inp-datum').value||new Date().toISOString().slice(0,10), id=String(r.id||r.naam);
-  data.ritten.unshift({id:Date.now(),datum,type:r.type,van:r.van,naar:r.naar,kmStart:0,kmEind:r.km,km:r.km,doel:r.doel||r.naam,opmerking:'Vaste rit'+(retour?' (heen)':''),vasteRitId:id});
-  if(retour)data.ritten.unshift({id:Date.now()+1,datum,type:r.type,van:r.naar,naar:r.van,kmStart:0,kmEind:r.km,km:r.km,doel:r.doel||r.naam,opmerking:'Vaste rit (retour)',vasteRitId:id});
-  updateStats(); planSync(); toonSuggesties(); toon(retour?`Retour ${r.km*2} km ✓`:`${r.km} km ✓`);
+
+  // Formulier invullen en naar invoer tab navigeren
+  switchTab('invoer', document.querySelector('.nav-item'));
+  document.getElementById('inp-type').value=r.type;
+  document.getElementById('inp-van').value=r.van;
+  document.getElementById('inp-naar').value=r.naar;
+  document.getElementById('inp-doel').value=r.doel||r.naam;
+  document.getElementById('inp-opmerking').value='Vaste rit'+(retour?' (retour)':'');
+
+  // Voertuig selecteren
+  const vsel=document.getElementById('inp-voertuig');
+  if(vsel) vsel.value=data.instellingen.standaardVoertuig||'';
+
+  // Beginstand uit laatste rit
+  const metStand=data.ritten.filter(x=>x.kmEind>0);
+  if(metStand.length){
+    const kt=data.instellingen.standaardVoertuig||'';
+    const pool=kt?metStand.filter(x=>x.opmerking?.includes(kt)):metStand;
+    const hoogste=(pool.length?pool:metStand).reduce((b,x)=>x.kmEind>b.kmEind?x:b);
+    document.getElementById('inp-start').value=hoogste.kmEind;
+  }
+  document.getElementById('inp-eind').value='';
+  updateKmPill();
+
+  // Afstand alvast instellen via berekendeAfstand
+  berekendeAfstand = retour ? r.km * 2 : r.km;
+  document.getElementById('afstand-val').textContent = berekendeAfstand.toLocaleString('nl-NL');
+  const aanpas = document.getElementById('afstand-aanpassen');
+  aanpas.style.display='flex'; aanpas.style.alignItems='center'; aanpas.style.gap='8px'; aanpas.style.marginLeft='auto';
+  document.getElementById('afstand-status').textContent=`✓ ${berekendeAfstand} km (vaste rit${retour?' · retour':''}) — pas aan indien nodig`;
+  document.getElementById('route-info').style.display='none';
+  document.getElementById('bereken-btn').textContent='🔄 Herberekenen';
+
+  toon('Gegevens ingevuld — controleer en sla op');
 }
 
-// ════════════════════════════════════════════
 // AFSTAND BEREKENING (Google Routes API)
 // ════════════════════════════════════════════
 function resetAfstand(){
