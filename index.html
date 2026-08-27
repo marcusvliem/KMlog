@@ -714,7 +714,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '6.5.0';
+const APP_VERSION = '6.6.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1053,14 +1053,20 @@ async function regVaste(idx,retour){
   document.getElementById('inp-eind').value='';
   updateKmPill();
 
-  // Afstand alvast instellen via berekendeAfstand
-  berekendeAfstand = retour ? r.km * 2 : r.km;
-  document.getElementById('afstand-val').textContent = berekendeAfstand.toLocaleString('nl-NL');
+  // Afstand: altijd enkelvoudig — retour checkbox regelt de tweede rit
+  berekendeAfstand = r.km;
+  document.getElementById('afstand-val').textContent = r.km.toLocaleString('nl-NL');
   const aanpas = document.getElementById('afstand-aanpassen');
   aanpas.style.display='flex'; aanpas.style.alignItems='center'; aanpas.style.gap='8px'; aanpas.style.marginLeft='auto';
-  document.getElementById('afstand-status').textContent=`✓ ${berekendeAfstand} km (vaste rit${retour?' · retour':''}) — pas aan indien nodig`;
+  document.getElementById('afstand-status').textContent=`✓ ${r.km} km (vaste rit) — pas aan indien nodig`;
   document.getElementById('route-info').style.display='none';
   document.getElementById('bereken-btn').textContent='🔄 Herberekenen';
+
+  // Retour checkbox instellen
+  const retourCb = document.getElementById('inp-retour');
+  if(retourCb) retourCb.checked = retour;
+  updateRetourLabel();
+  updateKmPill();
 
   toon('Gegevens ingevuld — controleer en sla op');
 }
@@ -1217,15 +1223,14 @@ async function slaRitOp(){
       : [];
 
     if(latereRitten.length > 0 && kmEind > 0){
-      // Doorschuif modal — retour meegeven als extra rit
-      const retourRit = isRetour ? {id:Date.now()+1,datum,type,van:naar,naar:van,kmStart:0,kmEind:0,km,doel,opmerking:opmerking+' (retour)'} : null;
+      const retourRit = isRetour ? {id:Date.now()+1,datum,type,van:naar,naar:van,kmStart:kmEind,kmEind:kmEind+km,km,doel,opmerking:opmerking+' (retour)'} : null;
       nieuweRit._retourRit = retourRit;
       toonDoorschuifBevestiging(nieuweRit, latereRitten, km);
       return;
     } else {
       data.ritten.unshift(nieuweRit);
       if(isRetour){
-        data.ritten.unshift({id:Date.now()+1,datum,type,van:naar,naar:van,kmStart:0,kmEind:0,km,doel,opmerking:opmerking+' (retour)'});
+        data.ritten.unshift({id:Date.now()+1,datum,type,van:naar,naar:van,kmStart:kmEind,kmEind:kmEind+km,km,doel,opmerking:opmerking+' (retour)'});
       }
       toon(isRetour ? `${km*2} km opgeslagen (retour) ✓` : `${km.toLocaleString('nl-NL')} km opgeslagen ✓`);
     }
