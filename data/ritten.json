@@ -37,6 +37,18 @@
       "opmerking": "34-MX-HL – KTM 1290"
     },
     {
+      "id": 1787870215207,
+      "datum": "2026-08-17",
+      "type": "zakelijk",
+      "van": "Havinghastraat 42 Alkmaar",
+      "naar": "Molenwindsingel 44 Culemborg",
+      "kmStart": 39846,
+      "kmEind": 39950,
+      "km": 104,
+      "doel": "MedITall retour",
+      "opmerking": "34-MX-HL – KTM 1290 (retour)"
+    },
+    {
       "id": 1787868988591,
       "datum": "2026-08-17",
       "type": "zakelijk",
