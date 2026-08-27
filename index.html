@@ -605,7 +605,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '4.2.0';
+const APP_VERSION = '4.3.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = localStorage.getItem(TOKEN_KEY)||'';
@@ -694,29 +694,43 @@ const TITELS = {invoer:'Nieuwe rit',ritten:'Ritten',rapport:'Rapport',adresboek:
 function updateUI(){ updateStats(); vulAC(); renderSnelknoppen(); laadInstUI(); toonSuggesties(); updateOdo(); }
 
 function updateOdo(){
-  // Zoek rit met hoogste eindstand (meest recente echte kilometerstand)
-  const metStand = data.ritten.filter(r => r.kmEind > 0);
+  // Neem de meest recente rit op datum — dat is het actieve voertuig
+  const metStand = data.ritten.filter(r => r.kmEind > 0 && r.datum);
   if (!metStand.length) return;
 
-  // Groepeer per voertuig op basis van opmerking (kenteken) — of neem gewoon hoogste eindstand
-  const hoogste = metStand.reduce((best, r) => r.kmEind > best.kmEind ? r : best);
+  // Meest recente rit op datum bepaalt het actieve voertuig/kentekenreeks
+  const gesorteerd = [...metStand].sort((a,b) => a.datum < b.datum ? 1 : -1);
+  const meestRecent = gesorteerd[0];
 
-  document.getElementById('odo-val').textContent = hoogste.kmEind.toLocaleString('nl-NL');
+  // Haal het kenteken uit de opmerking van de meest recente rit
+  const actiefsKenteken = meestRecent.opmerking?.match(/([A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+)/)?.[1] || null;
 
-  const d = new Date(hoogste.datum + 'T12:00:00');
+  // Filter op hetzelfde kenteken (zelfde voertuig), pak de hoogste eindstand daarvan
+  const zelfdeAuto = actiefsKenteken
+    ? metStand.filter(r => r.opmerking?.includes(actiefsKenteken))
+    : metStand.filter(r => {
+        // Geen kenteken in opmerking — neem ritten uit de periode na de laatste datum van het andere voertuig
+        const recentDatum = meestRecent.datum;
+        return r.datum >= recentDatum.slice(0,4)+'-01-01';
+      });
+
+  // Hoogste eindstand = actuele kilometerstand van dit voertuig
+  const actueel = zelfdeAuto.reduce((best, r) => r.kmEind > best.kmEind ? r : best);
+
+  document.getElementById('odo-val').textContent = actueel.kmEind.toLocaleString('nl-NL');
+
+  const d = new Date(actueel.datum + 'T12:00:00');
   document.getElementById('odo-laatste-datum').textContent =
     d.toLocaleDateString('nl-NL', {weekday:'short', day:'numeric', month:'long', year:'numeric'});
 
-  // Voertuig uit opmerking of autos lijst
-  const autoStr = hoogste.opmerking?.match(/([A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+)/)?.[1] || '';
-  const auto = (data.autos||[]).find(a => a.kenteken === autoStr);
+  // Voertuig label
+  const auto = (data.autos||[]).find(a => a.kenteken === actiefsKenteken);
   document.getElementById('odo-voertuig').textContent = auto
     ? `${auto.kenteken} – ${auto.omschrijving}`
-    : autoStr || '—';
+    : actiefsKenteken || '—';
 
-  // Sub label
   document.getElementById('odo-sub').textContent =
-    `Eindstand na rit naar ${hoogste.naar || '—'}`;
+    `Laatste rit: ${actueel.van?.split(',')[0] || '—'} → ${actueel.naar?.split(',')[0] || '—'}`;
 }
 
 function switchTab(tab,btn){
