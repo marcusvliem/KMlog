@@ -1,6 +1,19 @@
 {
   "ritten": [
     {
+      "id": 1787867325031,
+      "datum": "2026-06-24",
+      "type": "zakelijk",
+      "van": "Havinghastraat 42 Alkmaar",
+      "naar": "Molenwindsingel 44 Culemborg",
+      "kmStart": 0,
+      "kmEind": 104,
+      "km": 104,
+      "doel": "MedITall retour",
+      "opmerking": "Vaste rit (retour)",
+      "vasteRitId": "1787859832834"
+    },
+    {
       "id": 1787867230160,
       "datum": "2026-06-24",
       "type": "zakelijk",
