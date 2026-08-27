@@ -714,7 +714,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '6.3.0';
+const APP_VERSION = '6.4.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -931,24 +931,38 @@ const TITELS = {invoer:'Nieuwe rit',ritten:'Ritten',rapport:'Rapport',adresboek:
 function updateUI(){ updateStats(); vulAC(); renderSnelknoppen(); laadInstUI(); toonSuggesties(); updateOdo(); resetForm(); }
 
 function updateOdo(){
-  const metStand = data.ritten.filter(r => r.kmEind > 0 && r.datum);
+  const standaardKt = data.instellingen.standaardVoertuig||'';
+  const ktRitten = standaardKt
+    ? data.ritten.filter(r => r.datum && r.opmerking?.includes(standaardKt))
+    : data.ritten.filter(r => r.datum);
+
+  if (!ktRitten.length) return;
+
+  // Zoek de laatste rit met een echte eindstand — dat is ons anker
+  const metStand = ktRitten.filter(r => r.kmEind > 0);
   if (!metStand.length) return;
 
-  const standaardKt = data.instellingen.standaardVoertuig||'';
-  const pool = standaardKt
-    ? metStand.filter(r => r.opmerking?.includes(standaardKt))
-    : metStand;
-  const actueel = (pool.length ? pool : metStand).reduce((best,r) => r.kmEind > best.kmEind ? r : best);
+  const anker = metStand.reduce((best,r) => r.kmEind > best.kmEind ? r : best);
 
-  document.getElementById('odo-val').textContent = actueel.kmEind.toLocaleString('nl-NL');
-  const d = new Date(actueel.datum+'T12:00:00');
+  // Tel alle ritten op die NA het anker vallen (hebben geen eindstand)
+  const extraKm = ktRitten
+    .filter(r => r.datum > anker.datum && r.kmEind === 0)
+    .reduce((s,r) => s + (r.km||0), 0);
+
+  const actueleStand = anker.kmEind + extraKm;
+
+  // Recentste rit voor de subtitel
+  const recentste = ktRitten.sort((a,b) => a.datum < b.datum ? 1 : -1)[0];
+
+  document.getElementById('odo-val').textContent = actueleStand.toLocaleString('nl-NL');
+  const d = new Date(recentste.datum+'T12:00:00');
   document.getElementById('odo-laatste-datum').textContent =
     d.toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
   const auto=(data.autos||[]).find(a=>a.kenteken===standaardKt);
   document.getElementById('odo-voertuig').textContent = auto
     ? `${auto.kenteken} – ${auto.omschrijving}` : standaardKt||'—';
   document.getElementById('odo-sub').textContent =
-    `Laatste rit: ${actueel.van?.split(',')[0]||'—'} → ${actueel.naar?.split(',')[0]||'—'}`;
+    `Laatste rit: ${recentste.van?.split(',')[0]||'—'} → ${recentste.naar?.split(',')[0]||'—'}${extraKm > 0 ? ` (+${extraKm} km zonder teller)` : ''}`;
 }
 
 function switchTab(tab,btn){
