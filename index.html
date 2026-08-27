@@ -444,6 +444,11 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
                 <option value="prive">Privé</option>
               </select>
             </div>
+            <div class="fg"><span class="lbl">Voertuig</span>
+              <select id="inp-voertuig">
+                <option value="">— geen —</option>
+              </select>
+            </div>
           </div>
           <div class="form-row" style="margin-top:10px">
             <div class="fg">
@@ -634,7 +639,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '4.5.0';
+const APP_VERSION = '4.6.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = localStorage.getItem(TOKEN_KEY)||'';
@@ -722,43 +727,24 @@ const TITELS = {invoer:'Nieuwe rit',ritten:'Ritten',rapport:'Rapport',adresboek:
 function updateUI(){ updateStats(); vulAC(); renderSnelknoppen(); laadInstUI(); toonSuggesties(); updateOdo(); }
 
 function updateOdo(){
-  // Neem de meest recente rit op datum — dat is het actieve voertuig
   const metStand = data.ritten.filter(r => r.kmEind > 0 && r.datum);
   if (!metStand.length) return;
 
-  // Meest recente rit op datum bepaalt het actieve voertuig/kentekenreeks
-  const gesorteerd = [...metStand].sort((a,b) => a.datum < b.datum ? 1 : -1);
-  const meestRecent = gesorteerd[0];
-
-  // Haal het kenteken uit de opmerking van de meest recente rit
-  const actiefsKenteken = meestRecent.opmerking?.match(/([A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+)/)?.[1] || null;
-
-  // Filter op hetzelfde kenteken (zelfde voertuig), pak de hoogste eindstand daarvan
-  const zelfdeAuto = actiefsKenteken
-    ? metStand.filter(r => r.opmerking?.includes(actiefsKenteken))
-    : metStand.filter(r => {
-        // Geen kenteken in opmerking — neem ritten uit de periode na de laatste datum van het andere voertuig
-        const recentDatum = meestRecent.datum;
-        return r.datum >= recentDatum.slice(0,4)+'-01-01';
-      });
-
-  // Hoogste eindstand = actuele kilometerstand van dit voertuig
-  const actueel = zelfdeAuto.reduce((best, r) => r.kmEind > best.kmEind ? r : best);
+  const standaardKt = data.instellingen.standaardVoertuig||'';
+  const pool = standaardKt
+    ? metStand.filter(r => r.opmerking?.includes(standaardKt))
+    : metStand;
+  const actueel = (pool.length ? pool : metStand).reduce((best,r) => r.kmEind > best.kmEind ? r : best);
 
   document.getElementById('odo-val').textContent = actueel.kmEind.toLocaleString('nl-NL');
-
-  const d = new Date(actueel.datum + 'T12:00:00');
+  const d = new Date(actueel.datum+'T12:00:00');
   document.getElementById('odo-laatste-datum').textContent =
-    d.toLocaleDateString('nl-NL', {weekday:'short', day:'numeric', month:'long', year:'numeric'});
-
-  // Voertuig label
-  const auto = (data.autos||[]).find(a => a.kenteken === actiefsKenteken);
+    d.toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
+  const auto=(data.autos||[]).find(a=>a.kenteken===standaardKt);
   document.getElementById('odo-voertuig').textContent = auto
-    ? `${auto.kenteken} – ${auto.omschrijving}`
-    : actiefsKenteken || '—';
-
+    ? `${auto.kenteken} – ${auto.omschrijving}` : standaardKt||'—';
   document.getElementById('odo-sub').textContent =
-    `Laatste rit: ${actueel.van?.split(',')[0] || '—'} → ${actueel.naar?.split(',')[0] || '—'}`;
+    `Laatste rit: ${actueel.van?.split(',')[0]||'—'} → ${actueel.naar?.split(',')[0]||'—'}`;
 }
 
 function switchTab(tab,btn){
@@ -918,7 +904,10 @@ async function slaRitOp(){
   const datum=document.getElementById('inp-datum').value, type=document.getElementById('inp-type').value;
   const van=document.getElementById('inp-van').value.trim(), naar=document.getElementById('inp-naar').value.trim();
   const ks=parseFloat(document.getElementById('inp-start').value), ke=parseFloat(document.getElementById('inp-eind').value);
-  const doel=document.getElementById('inp-doel').value.trim(), opmerking=document.getElementById('inp-opmerking').value.trim();
+  const doel=document.getElementById('inp-doel').value.trim();
+  const voertuig=document.getElementById('inp-voertuig').value;
+  const auto=(data.autos||[]).find(a=>a.kenteken===voertuig);
+  const opmerking=voertuig ? `${voertuig}${auto?' – '+auto.omschrijving:''}` : document.getElementById('inp-opmerking').value.trim();
   if(!datum||!van||!naar){toon('Vul datum, vertrek en bestemming in',true);return;}
 
   // Bepaal km: teller standen hebben voorrang, anders Google Maps afstand
@@ -954,16 +943,15 @@ function resetForm(){
   document.getElementById('inp-van').value=data.instellingen.thuis||'';
   document.getElementById('inp-naar').value='';
 
-  // Beginstand: hoogste eindstand van actief voertuig
+  // Beginstand: hoogste eindstand van het standaard voertuig
+  const standaardKt = data.instellingen.standaardVoertuig||'';
   const metStand = data.ritten.filter(r => r.kmEind > 0);
   if (metStand.length) {
-    const gesorteerd = [...metStand].sort((a,b) => a.datum < b.datum ? 1 : -1);
-    const actief = gesorteerd[0];
-    const ktKenteken = actief.opmerking?.match(/([A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+)/)?.[1] || null;
-    const zelfdeAuto = ktKenteken
-      ? metStand.filter(r => r.opmerking?.includes(ktKenteken))
+    const zelfdeAuto = standaardKt
+      ? metStand.filter(r => r.opmerking?.includes(standaardKt))
       : metStand;
-    const hoogste = zelfdeAuto.reduce((best,r) => r.kmEind > best.kmEind ? r : best);
+    const pool = zelfdeAuto.length ? zelfdeAuto : metStand;
+    const hoogste = pool.reduce((best,r) => r.kmEind > best.kmEind ? r : best);
     document.getElementById('inp-start').value = hoogste.kmEind;
   } else {
     document.getElementById('inp-start').value='';
@@ -972,6 +960,12 @@ function resetForm(){
   document.getElementById('inp-eind').value='';
   document.getElementById('inp-doel').value='';
   document.getElementById('inp-opmerking').value='';
+
+  // Standaard voertuig selecteren
+  const standaard = data.instellingen.standaardVoertuig||'';
+  const sel = document.getElementById('inp-voertuig');
+  if(sel) sel.value = standaard;
+
   updateKmPill(); resetAfstand();
   document.getElementById('bereken-btn').textContent='📍 Afstand berekenen';
   document.getElementById('bereken-btn').disabled=false;
@@ -1232,8 +1226,34 @@ async function slaInstellingenOp(){
 }
 function renderAutos(){
   const a=data.autos||[];
-  document.getElementById('autos-list').innerHTML=!a.length?'<p style="font-size:12px;color:var(--text-dim);margin-bottom:8px">Nog geen voertuigen</p>'
-    :a.map((x,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface2);border-radius:6px;margin-bottom:6px;font-size:13px"><span style="font-family:var(--mono);color:var(--accent2)">${x.kenteken}</span><span style="color:var(--text-mid);flex:1">${x.omschrijving}</span><button class="btn btn-danger" onclick="delAuto(${i})">✕</button></div>`).join('');
+  const standaard=data.instellingen.standaardVoertuig||'';
+  document.getElementById('autos-list').innerHTML=!a.length
+    ?'<p style="font-size:12px;color:var(--text-dim);margin-bottom:8px">Nog geen voertuigen</p>'
+    :a.map((x,i)=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface2);border-radius:6px;margin-bottom:6px;font-size:13px">
+        <span style="font-family:var(--mono);color:var(--accent2)">${x.kenteken}</span>
+        <span style="color:var(--text-mid);flex:1">${x.omschrijving}</span>
+        <button onclick="setStandaardVoertuig('${x.kenteken}')" title="Stel in als standaard"
+          style="background:none;border:none;cursor:pointer;font-size:15px;opacity:${x.kenteken===standaard?'1':'0.3'};transition:opacity .2s"
+          onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='${x.kenteken===standaard?'1':'0.3'}'"
+        >${x.kenteken===standaard?'★':'☆'}</button>
+        <button class="btn btn-danger" onclick="delAuto(${i})">✕</button>
+      </div>`).join('');
+
+  // Update voertuig dropdown in formulier
+  const sel=document.getElementById('inp-voertuig');
+  if(sel){
+    const cur=sel.value;
+    sel.innerHTML='<option value="">— geen —</option>'+a.map(x=>`<option value="${x.kenteken}">${x.kenteken} – ${x.omschrijving}</option>`).join('');
+    sel.value=cur||standaard||'';
+  }
+}
+
+async function setStandaardVoertuig(kenteken){
+  data.instellingen.standaardVoertuig = kenteken;
+  renderAutos();
+  planSync();
+  toon(kenteken + ' ingesteld als standaard voertuig');
 }
 async function voegAutoToe(){
   const k=document.getElementById('auto-kt').value.trim().toUpperCase(),o=document.getElementById('auto-oms').value.trim();
