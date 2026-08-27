@@ -12673,6 +12673,11 @@
       "naam": "Thuis",
       "adres": "Molenwindsingel 44 Culemborg",
       "cat": "thuis"
+    },
+    {
+      "naam": "Meditall",
+      "adres": "Havinghastraat 42 Alkmaar",
+      "cat": "werk"
     }
   ],
   "vasteRitten": [
