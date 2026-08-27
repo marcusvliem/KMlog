@@ -708,7 +708,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '6.0.0';
+const APP_VERSION = '6.1.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1361,9 +1361,11 @@ function renderRitten(){
   list.innerHTML=slice.map(r=>{
     const d=new Date(r.datum+'T12:00:00'),dag=d.toLocaleDateString('nl-NL',{day:'2-digit',month:'short'});
     const bl=r.type==='woonwerk'?'woon-werk':r.type;
+    const isRetour = r.opmerking?.toLowerCase().includes('retour') || r.doel?.toLowerCase().includes('retour');
+    const retourBadge = isRetour ? `<span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:rgba(100,160,255,.12);color:var(--info);letter-spacing:.04em;margin-left:4px">⇄ retour</span>` : '';
     return `<div class="rit ${r.type}">
       <div class="rit-date"><strong>${dag}</strong>${d.getFullYear()}</div>
-      <div class="rit-body"><div class="rit-route">${r.van} → ${r.naar}</div><div class="rit-doel">${r.doel||r.opmerking||'—'}</div></div>
+      <div class="rit-body"><div class="rit-route">${r.van} → ${r.naar}${retourBadge}</div><div class="rit-doel">${r.doel||r.opmerking||'—'}</div></div>
       <div class="rit-km"><div class="rit-km-val">${r.km.toLocaleString('nl-NL')} km</div><span class="badge badge-${r.type}">${bl}</span></div>
       <div style="display:flex;gap:4px">
         <button class="btn btn-ghost btn-sm rit-del" onclick="bewerkRit(${r.id})" title="Bewerken" style="font-size:13px">✎</button>
