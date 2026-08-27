@@ -539,6 +539,12 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
             <div class="fg"><span class="lbl">Doel / Relatie</span><input type="text" id="inp-doel" list="ac-doel"><datalist id="ac-doel"></datalist></div>
             <div class="fg"><span class="lbl">Opmerking</span><input type="text" id="inp-opmerking" placeholder="optioneel"></div>
           </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 0 4px">
+            <input type="checkbox" id="inp-retour" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer" onchange="updateRetourLabel()">
+            <label for="inp-retour" style="font-size:13px;color:var(--text-mid);cursor:pointer;user-select:none">
+              Retour registreren <span id="retour-km-label" style="color:var(--text-dim);font-family:var(--mono);font-size:12px"></span>
+            </label>
+          </div>
           <div class="form-actions">
             <button class="btn btn-ghost" onclick="resetForm()">Wissen</button>
             <button class="btn btn-primary" onclick="slaRitOp()">Rit opslaan</button>
@@ -708,7 +714,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '6.1.0';
+const APP_VERSION = '6.2.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1110,6 +1116,7 @@ async function berekenAfstand(){
 
     status.textContent = `✓ ${km} km gevonden — pas aan met ± als je een andere route reed`;
     btn.textContent = '🔄 Herberekenen';
+    updateRetourLabel();
 
   } catch(e) {
     status.textContent = '⚠ Verbindingsfout: ' + e.message;
@@ -1122,6 +1129,7 @@ function pasAfstandAan(delta){
   if (berekendeAfstand === null) return;
   berekendeAfstand = Math.max(1, berekendeAfstand + delta);
   document.getElementById('afstand-val').textContent = berekendeAfstand.toLocaleString('nl-NL');
+  updateRetourLabel();
 }
 
 
@@ -1130,7 +1138,18 @@ function updateKmPill(){
   if(!isNaN(s)&&!isNaN(e)&&e>=s){el.textContent=(e-s).toLocaleString('nl-NL')+' km';el.classList.remove('empty');}
   else{el.textContent='Vul standen in';el.classList.add('empty');}
 }
-async function slaRitOp(){
+function updateRetourLabel(){
+  const retour = document.getElementById('inp-retour')?.checked;
+  const lbl = document.getElementById('retour-km-label');
+  if(!lbl) return;
+  if(retour && berekendeAfstand){
+    lbl.textContent = `(heen ${berekendeAfstand} km + terug ${berekendeAfstand} km = ${berekendeAfstand*2} km)`;
+  } else if(retour){
+    lbl.textContent = '(heen + terug)';
+  } else {
+    lbl.textContent = '';
+  }
+}
   const datum=document.getElementById('inp-datum').value, type=document.getElementById('inp-type').value;
   const van=document.getElementById('inp-van').value.trim(), naar=document.getElementById('inp-naar').value.trim();
   const ks=parseFloat(document.getElementById('inp-start').value), ke=parseFloat(document.getElementById('inp-eind').value);
@@ -1157,20 +1176,25 @@ async function slaRitOp(){
     bewerkRitId = null;
     toon(km.toLocaleString('nl-NL') + ' km bijgewerkt ✓');
   } else {
-    // Nieuwe rit — check of er latere ritten zijn met km-standen die doorgeschoven moeten worden
-    const nieuweRit = {id:Date.now(),datum,type,van,naar,kmStart,kmEind,km,doel,opmerking};
+    const isRetour = document.getElementById('inp-retour')?.checked;
+    const nieuweRit = {id:Date.now(),datum,type,van,naar,kmStart,kmEind,km,doel,opmerking:opmerking+(isRetour?' (heen)':'')};
     const standaardKt = data.instellingen.standaardVoertuig||voertuig||'';
     const latereRitten = standaardKt
       ? data.ritten.filter(r => r.datum > datum && r.opmerking?.includes(standaardKt) && (r.kmStart > 0 || r.kmEind > 0))
       : [];
 
     if(latereRitten.length > 0 && kmEind > 0){
-      // Toon bevestigingsscherm
+      // Doorschuif modal — retour meegeven als extra rit
+      const retourRit = isRetour ? {id:Date.now()+1,datum,type,van:naar,naar:van,kmStart:0,kmEind:0,km,doel,opmerking:opmerking+' (retour)'} : null;
+      nieuweRit._retourRit = retourRit;
       toonDoorschuifBevestiging(nieuweRit, latereRitten, km);
       return;
     } else {
       data.ritten.unshift(nieuweRit);
-      toon(km.toLocaleString('nl-NL') + ' km opgeslagen ✓');
+      if(isRetour){
+        data.ritten.unshift({id:Date.now()+1,datum,type,van:naar,naar:van,kmStart:0,kmEind:0,km,doel,opmerking:opmerking+' (retour)'});
+      }
+      toon(isRetour ? `${km*2} km opgeslagen (retour) ✓` : `${km.toLocaleString('nl-NL')} km opgeslagen ✓`);
     }
   }
 
@@ -1229,23 +1253,27 @@ function sluitDoorschuifModal(){
 
 function slaOpZonderDoorschuiven(nieuweRit){
   sluitDoorschuifModal();
+  const retourRit = nieuweRit._retourRit;
+  delete nieuweRit._retourRit;
   data.ritten.unshift(nieuweRit);
+  if(retourRit) data.ritten.unshift(retourRit);
   data.ritten.sort((a,b)=>new Date(b.datum)-new Date(a.datum));
   berekendeAfstand = null;
   document.querySelector('.form-actions .btn-primary').textContent='Rit opslaan';
   updateStats(); vulAC(); updateOdo(); planSync();
   resetForm();
-  toon(nieuweRit.km.toLocaleString('nl-NL') + ' km opgeslagen ✓');
+  toon(retourRit ? `${nieuweRit.km*2} km opgeslagen (retour) ✓` : `${nieuweRit.km.toLocaleString('nl-NL')} km opgeslagen ✓`);
 }
 
 function slaOpMetDoorschuiven(nieuweRit, verschil){
   sluitDoorschuifModal();
-  // Voeg nieuwe rit toe
+  const retourRit = nieuweRit._retourRit;
+  delete nieuweRit._retourRit;
   data.ritten.unshift(nieuweRit);
-  // Schuif km-standen door van latere ritten van hetzelfde voertuig
+  if(retourRit) data.ritten.unshift(retourRit);
   const standaardKt = data.instellingen.standaardVoertuig||'';
   data.ritten.forEach(r => {
-    if(r.id === nieuweRit.id) return;
+    if(r.id === nieuweRit.id || (retourRit && r.id === retourRit.id)) return;
     if(r.datum <= nieuweRit.datum) return;
     if(standaardKt && !r.opmerking?.includes(standaardKt)) return;
     if(r.kmStart > 0) r.kmStart += verschil;
@@ -1256,7 +1284,7 @@ function slaOpMetDoorschuiven(nieuweRit, verschil){
   document.querySelector('.form-actions .btn-primary').textContent='Rit opslaan';
   updateStats(); vulAC(); updateOdo(); planSync();
   resetForm();
-  toon(`${nieuweRit.km} km opgeslagen + ${verschil} km doorgeschoven ✓`);
+  toon(`${retourRit ? nieuweRit.km*2 : nieuweRit.km} km opgeslagen + ${verschil} km doorgeschoven ✓`);
 }
 function resetForm(){
   // Datum: dag na de laatste rit, of vandaag als er geen ritten zijn
@@ -1301,6 +1329,10 @@ function resetForm(){
   updateKmPill(); resetAfstand();
   document.getElementById('bereken-btn').textContent='📍 Afstand berekenen';
   document.getElementById('bereken-btn').disabled=false;
+  // Reset retour checkbox
+  const retourCb = document.getElementById('inp-retour');
+  if(retourCb) retourCb.checked = false;
+  updateRetourLabel();
   // Reset bewerkmodus
   bewerkRitId = null;
   document.querySelector('.form-actions .btn-primary').textContent='Rit opslaan';
