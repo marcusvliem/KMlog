@@ -8,7 +8,12 @@
     "vergoeding": 0.23,
     "jaar": 2026
   },
-  "autos": [],
+  "autos": [
+    {
+      "kenteken": "34-MX-HL",
+      "omschrijving": "KTM 1290"
+    }
+  ],
   "adressen": [],
   "vasteRitten": []
 }
