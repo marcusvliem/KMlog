@@ -714,7 +714,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '7.0.0';
+const APP_VERSION = '7.1.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1474,28 +1474,24 @@ function renderRitten(){
 function goPag(p){pagina=p;renderRitten();}
 
 function verschuifRit(id, richting){
+  richting = parseInt(richting);
   const idx = data.ritten.findIndex(r=>r.id===id);
   if(idx === -1) return;
   const datum = data.ritten[idx].datum;
-
-  // Array: index 0 = eerste in scherm (bovenaan)
-  // Omlaag (+1) in scherm = hogere array index
-  // Omhoog (-1) in scherm = lagere array index
   let buurIdx = -1;
-  if(richting === +1){
-    // Zoek eerste buur met zelfde datum op hogere index
+  if(richting > 0){
     for(let i=idx+1; i<data.ritten.length; i++){
       if(data.ritten[i].datum === datum){ buurIdx = i; break; }
     }
   } else {
-    // Zoek eerste buur met zelfde datum op lagere index
     for(let i=idx-1; i>=0; i--){
       if(data.ritten[i].datum === datum){ buurIdx = i; break; }
     }
   }
   if(buurIdx === -1) return;
-
-  [data.ritten[idx], data.ritten[buurIdx]] = [data.ritten[buurIdx], data.ritten[idx]];
+  const temp = data.ritten[idx];
+  data.ritten[idx] = data.ritten[buurIdx];
+  data.ritten[buurIdx] = temp;
   planSync();
   renderRitten();
 }
