@@ -708,7 +708,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '5.9.0';
+const APP_VERSION = '6.0.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1140,9 +1140,8 @@ async function slaRitOp(){
   const opmerking=voertuig ? `${voertuig}${auto?' – '+auto.omschrijving:''}` : document.getElementById('inp-opmerking').value.trim();
   if(!datum||!van||!naar){toon('Vul datum, vertrek en bestemming in',true);return;}
 
-  // Bepaal km: teller standen hebben voorrang, anders Google Maps afstand
-  let km = null;
-  let kmStart = 0, kmEind = 0;
+  // Bepaal km
+  let km = null, kmStart = 0, kmEind = 0;
   if(!isNaN(ks) && !isNaN(ke) && ke >= ks){
     km = ke - ks; kmStart = ks; kmEind = ke;
   } else if (berekendeAfstand !== null) {
@@ -1152,20 +1151,112 @@ async function slaRitOp(){
   }
 
   if(bewerkRitId !== null){
-    // Bewerkmodus: overschrijf bestaande rit
+    // Bewerkmodus
     const idx = data.ritten.findIndex(r=>r.id===bewerkRitId);
     if(idx !== -1) data.ritten[idx] = {...data.ritten[idx], datum, type, van, naar, kmStart, kmEind, km, doel, opmerking};
     bewerkRitId = null;
     toon(km.toLocaleString('nl-NL') + ' km bijgewerkt ✓');
   } else {
-    data.ritten.unshift({id:Date.now(),datum,type,van,naar,kmStart,kmEind,km,doel,opmerking});
-    toon(km.toLocaleString('nl-NL') + ' km opgeslagen ✓');
+    // Nieuwe rit — check of er latere ritten zijn met km-standen die doorgeschoven moeten worden
+    const nieuweRit = {id:Date.now(),datum,type,van,naar,kmStart,kmEind,km,doel,opmerking};
+    const standaardKt = data.instellingen.standaardVoertuig||voertuig||'';
+    const latereRitten = standaardKt
+      ? data.ritten.filter(r => r.datum > datum && r.opmerking?.includes(standaardKt) && (r.kmStart > 0 || r.kmEind > 0))
+      : [];
+
+    if(latereRitten.length > 0 && kmEind > 0){
+      // Toon bevestigingsscherm
+      toonDoorschuifBevestiging(nieuweRit, latereRitten, km);
+      return;
+    } else {
+      data.ritten.unshift(nieuweRit);
+      toon(km.toLocaleString('nl-NL') + ' km opgeslagen ✓');
+    }
   }
 
   berekendeAfstand = null;
   document.querySelector('.form-actions .btn-primary').textContent='Rit opslaan';
   updateStats(); vulAC(); updateOdo(); planSync();
   resetForm();
+}
+
+function toonDoorschuifBevestiging(nieuweRit, latereRitten, km){
+  // Bereken nieuwe standen
+  const verschil = km;
+  const preview = latereRitten.slice(0,5).map(r => {
+    const d = new Date(r.datum+'T12:00:00').toLocaleDateString('nl-NL',{day:'2-digit',month:'short'});
+    const oudStart = r.kmStart, oudEind = r.kmEind;
+    const nieuwStart = oudStart > 0 ? oudStart + verschil : 0;
+    const nieuwEind = oudEind > 0 ? oudEind + verschil : 0;
+    return `<tr>
+      <td style="padding:6px 8px;color:var(--text-mid);font-size:12px">${d}</td>
+      <td style="padding:6px 8px;font-size:11px;color:var(--text-dim);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.van?.split(',')[0]} → ${r.naar?.split(',')[0]}</td>
+      <td style="padding:6px 8px;font-family:var(--mono);font-size:12px;color:var(--text-dim);text-decoration:line-through">${oudStart > 0 ? oudStart.toLocaleString('nl-NL') : '—'} / ${oudEind > 0 ? oudEind.toLocaleString('nl-NL') : '—'}</td>
+      <td style="padding:6px 8px;font-family:var(--mono);font-size:12px;color:var(--accent2)">${nieuwStart > 0 ? nieuwStart.toLocaleString('nl-NL') : '—'} / ${nieuwEind > 0 ? nieuwEind.toLocaleString('nl-NL') : '—'}</td>
+    </tr>`;
+  }).join('');
+  const meer = latereRitten.length > 5 ? `<tr><td colspan="4" style="padding:6px 8px;font-size:11px;color:var(--text-dim)">... en ${latereRitten.length - 5} andere ritten</td></tr>` : '';
+
+  const modal = document.createElement('div');
+  modal.className = 'overlay';
+  modal.id = 'doorschuif-modal';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:560px">
+      <h2>Km-standen doorschuiven?</h2>
+      <p class="modal-sub">Je voegt een rit in op <strong>${new Date(nieuweRit.datum+'T12:00:00').toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'})}</strong> van <strong>${km} km</strong>.
+      Er zijn ${latereRitten.length} latere ritten met km-standen. Wil je die met ${km} km ophogen?</p>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
+        <thead><tr>
+          <th style="padding:6px 8px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);text-align:left;border-bottom:1px solid var(--border)">Datum</th>
+          <th style="padding:6px 8px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);text-align:left;border-bottom:1px solid var(--border)">Route</th>
+          <th style="padding:6px 8px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);text-align:left;border-bottom:1px solid var(--border)">Oud (begin/eind)</th>
+          <th style="padding:6px 8px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);text-align:left;border-bottom:1px solid var(--border)">Nieuw (begin/eind)</th>
+        </tr></thead>
+        <tbody>${preview}${meer}</tbody>
+      </table>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="slaOpZonderDoorschuiven(${JSON.stringify(nieuweRit).replace(/"/g,'&quot;')})">Opslaan zonder aanpassen</button>
+        <button class="btn btn-primary" onclick="slaOpMetDoorschuiven(${JSON.stringify(nieuweRit).replace(/"/g,'&quot;')}, ${verschil})">✓ Opslaan + standen ophogen</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function sluitDoorschuifModal(){
+  const m = document.getElementById('doorschuif-modal');
+  if(m) m.remove();
+}
+
+function slaOpZonderDoorschuiven(nieuweRit){
+  sluitDoorschuifModal();
+  data.ritten.unshift(nieuweRit);
+  data.ritten.sort((a,b)=>new Date(b.datum)-new Date(a.datum));
+  berekendeAfstand = null;
+  document.querySelector('.form-actions .btn-primary').textContent='Rit opslaan';
+  updateStats(); vulAC(); updateOdo(); planSync();
+  resetForm();
+  toon(nieuweRit.km.toLocaleString('nl-NL') + ' km opgeslagen ✓');
+}
+
+function slaOpMetDoorschuiven(nieuweRit, verschil){
+  sluitDoorschuifModal();
+  // Voeg nieuwe rit toe
+  data.ritten.unshift(nieuweRit);
+  // Schuif km-standen door van latere ritten van hetzelfde voertuig
+  const standaardKt = data.instellingen.standaardVoertuig||'';
+  data.ritten.forEach(r => {
+    if(r.id === nieuweRit.id) return;
+    if(r.datum <= nieuweRit.datum) return;
+    if(standaardKt && !r.opmerking?.includes(standaardKt)) return;
+    if(r.kmStart > 0) r.kmStart += verschil;
+    if(r.kmEind > 0) r.kmEind += verschil;
+  });
+  data.ritten.sort((a,b)=>new Date(b.datum)-new Date(a.datum));
+  berekendeAfstand = null;
+  document.querySelector('.form-actions .btn-primary').textContent='Rit opslaan';
+  updateStats(); vulAC(); updateOdo(); planSync();
+  resetForm();
+  toon(`${nieuweRit.km} km opgeslagen + ${verschil} km doorgeschoven ✓`);
 }
 function resetForm(){
   // Datum: dag na de laatste rit, of vandaag als er geen ritten zijn
