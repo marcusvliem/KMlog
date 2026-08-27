@@ -446,13 +446,41 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
             </div>
           </div>
           <div class="form-row" style="margin-top:10px">
-            <div class="fg"><span class="lbl">Vertrekplaats</span><input type="text" id="inp-van" list="ac-van"><datalist id="ac-van"></datalist></div>
-            <div class="fg"><span class="lbl">Bestemming</span><input type="text" id="inp-naar" list="ac-naar"><datalist id="ac-naar"></datalist></div>
+            <div class="fg">
+              <span class="lbl">Vertrekplaats</span>
+              <input type="text" id="inp-van" list="ac-van" placeholder="Straat 1, Culemborg" oninput="resetAfstand()">
+              <datalist id="ac-van"></datalist>
+            </div>
+            <div class="fg">
+              <span class="lbl">Bestemming</span>
+              <input type="text" id="inp-naar" list="ac-naar" placeholder="Straat 1, Alkmaar" oninput="resetAfstand()">
+              <datalist id="ac-naar"></datalist>
+            </div>
           </div>
+
+          <!-- AFSTAND BEREKENING -->
+          <div style="margin-top:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <button class="btn btn-ghost" id="bereken-btn" onclick="berekenAfstand()" style="flex-shrink:0">
+                📍 Afstand berekenen
+              </button>
+              <div id="afstand-status" style="font-size:12px;color:var(--text-dim)">Vul vertrek en bestemming in</div>
+              <div id="afstand-aanpassen" style="display:none;display:flex;align-items:center;gap:8px;margin-left:auto">
+                <button onclick="pasAfstandAan(-1)" style="width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">−</button>
+                <div style="text-align:center;min-width:80px">
+                  <div id="afstand-val" style="font-family:var(--mono);font-size:20px;font-weight:500;color:var(--accent2)">0</div>
+                  <div style="font-size:10px;color:var(--text-dim);margin-top:1px">km · klik om aan te passen</div>
+                </div>
+                <button onclick="pasAfstandAan(+1)" style="width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">＋</button>
+              </div>
+            </div>
+            <div id="route-info" style="display:none;margin-top:8px;font-size:11px;color:var(--text-dim);font-family:var(--mono)"></div>
+          </div>
+
           <div class="form-row" style="margin-top:10px">
-            <div class="fg"><span class="lbl">Beginstand (km)</span><input type="number" id="inp-start" placeholder="45230" min="0"></div>
-            <div class="fg"><span class="lbl">Eindstand (km)</span><input type="number" id="inp-eind" placeholder="45334" min="0"></div>
-            <div class="fg"><span class="lbl">Gereden km</span><div class="km-pill empty" id="km-pill">Vul standen in</div></div>
+            <div class="fg"><span class="lbl">Beginstand (km) <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-dim)">(optioneel)</span></span><input type="number" id="inp-start" placeholder="45230" min="0" oninput="updateKmPill()"></div>
+            <div class="fg"><span class="lbl">Eindstand (km) <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-dim)">(optioneel)</span></span><input type="number" id="inp-eind" placeholder="45334" min="0" oninput="updateKmPill()"></div>
+            <div class="fg"><span class="lbl">Teller verschil</span><div class="km-pill empty" id="km-pill">Optioneel</div></div>
           </div>
           <div class="form-row" style="margin-top:10px">
             <div class="fg"><span class="lbl">Doel / Relatie</span><input type="text" id="inp-doel" list="ac-doel"><datalist id="ac-doel"></datalist></div>
@@ -599,13 +627,14 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
 // ════════════════════════════════════════════
 // CONFIG
 // ════════════════════════════════════════════
-const GITHUB_USER = 'marcusvliem';
+const GOOGLE_API_KEY = 'AIzaSyDcsrcQFOrOAXOrifxVnhippIS-bX_EqKM';
+let berekendeAfstand = null; // in km, van Google Maps
 const GITHUB_REPO = 'KMlog';
 const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '4.3.0';
+const APP_VERSION = '4.4.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = localStorage.getItem(TOKEN_KEY)||'';
@@ -801,8 +830,86 @@ async function regVaste(idx,retour){
 }
 
 // ════════════════════════════════════════════
-// INVOER FORM
+// AFSTAND BEREKENING (Google Routes API)
 // ════════════════════════════════════════════
+function resetAfstand(){
+  berekendeAfstand = null;
+  document.getElementById('afstand-aanpassen').style.display = 'none';
+  document.getElementById('route-info').style.display = 'none';
+  document.getElementById('afstand-status').textContent = 'Vul vertrek en bestemming in';
+}
+
+async function berekenAfstand(){
+  const van = document.getElementById('inp-van').value.trim();
+  const naar = document.getElementById('inp-naar').value.trim();
+  if (!van || !naar){ toon('Vul eerst vertrek en bestemming in', true); return; }
+
+  const btn = document.getElementById('bereken-btn');
+  const status = document.getElementById('afstand-status');
+  btn.textContent = '⏳ Berekenen...';
+  btn.disabled = true;
+  status.textContent = 'Route ophalen via Google Maps...';
+
+  try {
+    const res = await fetch(`https://routes.googleapis.com/directions/v2:computeRoutes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': GOOGLE_API_KEY,
+        'X-Goog-FieldMask': 'routes.distanceMeters,routes.duration,routes.legs.steps.distanceMeters'
+      },
+      body: JSON.stringify({
+        origin: { address: van },
+        destination: { address: naar },
+        travelMode: 'DRIVE',
+        routingPreference: 'TRAFFIC_UNAWARE'
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.routes || !data.routes.length) {
+      const fout = data.error?.message || 'Adres niet gevonden';
+      status.textContent = '⚠ ' + fout;
+      btn.textContent = '📍 Afstand berekenen';
+      btn.disabled = false;
+      return;
+    }
+
+    const route = data.routes[0];
+    const meters = route.distanceMeters;
+    const km = Math.round(meters / 1000);
+    berekendeAfstand = km;
+
+    // Toon resultaat
+    document.getElementById('afstand-val').textContent = km.toLocaleString('nl-NL');
+    document.getElementById('afstand-aanpassen').style.display = 'flex';
+    document.getElementById('afstand-aanpassen').style.alignItems = 'center';
+    document.getElementById('afstand-aanpassen').style.gap = '8px';
+    document.getElementById('afstand-aanpassen').style.marginLeft = 'auto';
+
+    const minuten = Math.round(parseInt(route.duration) / 60);
+    document.getElementById('route-info').style.display = 'block';
+    document.getElementById('route-info').textContent =
+      `Google Maps: ${km} km · ca. ${minuten} min rijden (snelste route)`;
+
+    status.textContent = `✓ ${km} km gevonden — pas aan met ± als je een andere route reed`;
+    btn.textContent = '🔄 Herberekenen';
+
+  } catch(e) {
+    status.textContent = '⚠ Verbindingsfout: ' + e.message;
+    btn.textContent = '📍 Afstand berekenen';
+  }
+  btn.disabled = false;
+}
+
+function pasAfstandAan(delta){
+  if (berekendeAfstand === null) return;
+  berekendeAfstand = Math.max(1, berekendeAfstand + delta);
+  document.getElementById('afstand-val').textContent = berekendeAfstand.toLocaleString('nl-NL');
+}
+
+
 function updateKmPill(){
   const s=parseFloat(document.getElementById('inp-start').value), e=parseFloat(document.getElementById('inp-eind').value), el=document.getElementById('km-pill');
   if(!isNaN(s)&&!isNaN(e)&&e>=s){el.textContent=(e-s).toLocaleString('nl-NL')+' km';el.classList.remove('empty');}
@@ -814,9 +921,22 @@ async function slaRitOp(){
   const ks=parseFloat(document.getElementById('inp-start').value), ke=parseFloat(document.getElementById('inp-eind').value);
   const doel=document.getElementById('inp-doel').value.trim(), opmerking=document.getElementById('inp-opmerking').value.trim();
   if(!datum||!van||!naar){toon('Vul datum, vertrek en bestemming in',true);return;}
-  if(isNaN(ks)||isNaN(ke)||ke<ks){toon('Controleer de km-standen',true);return;}
-  data.ritten.unshift({id:Date.now(),datum,type,van,naar,kmStart:ks,kmEind:ke,km:ke-ks,doel,opmerking});
-  updateStats(); vulAC(); updateOdo(); planSync(); toon((ke-ks)+' km opgeslagen'); resetForm();
+
+  // Bepaal km: teller standen hebben voorrang, anders Google Maps afstand
+  let km = null;
+  let kmStart = 0, kmEind = 0;
+  if(!isNaN(ks) && !isNaN(ke) && ke >= ks){
+    km = ke - ks; kmStart = ks; kmEind = ke;
+  } else if (berekendeAfstand !== null) {
+    km = berekendeAfstand;
+  } else {
+    toon('Bereken eerst de afstand of vul km-standen in', true); return;
+  }
+
+  data.ritten.unshift({id:Date.now(),datum,type,van,naar,kmStart,kmEind,km,doel,opmerking});
+  berekendeAfstand = null;
+  updateStats(); vulAC(); updateOdo(); planSync();
+  toon(km.toLocaleString('nl-NL') + ' km opgeslagen'); resetForm();
 }
 function resetForm(){
   document.getElementById('inp-datum').valueAsDate=new Date();
@@ -827,7 +947,9 @@ function resetForm(){
   document.getElementById('inp-eind').value='';
   document.getElementById('inp-doel').value='';
   document.getElementById('inp-opmerking').value='';
-  updateKmPill();
+  updateKmPill(); resetAfstand();
+  document.getElementById('bereken-btn').textContent='📍 Afstand berekenen';
+  document.getElementById('bereken-btn').disabled=false;
 }
 
 // ════════════════════════════════════════════
