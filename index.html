@@ -703,11 +703,12 @@ function laadLokaal(key){ try{return localStorage.getItem(key);}catch(e){return 
 let berekendeAfstand = null; // in km, van Google Maps
 const GITHUB_USER = 'marcusvliem';
 const GITHUB_REPO = 'KMlog';
+const GOOGLE_API_KEY = 'AIzaSyDcsrcQFOrOAXOrifxVnhippIS-bX_EqKM';
 const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '5.7.0';
+const APP_VERSION = '5.8.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
