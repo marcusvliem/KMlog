@@ -639,7 +639,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '4.6.0';
+const APP_VERSION = '4.7.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = localStorage.getItem(TOKEN_KEY)||'';
@@ -705,11 +705,41 @@ async function laadVanGithub(){
   setSS('syncing','laden…');
   try {
     const f=await ghGet(DATA_FILE);
-    if(f){ fileSha=f.sha; data={ritten:[],instellingen:defInst(),autos:[],adressen:[],vasteRitten:[],...JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g,'')))))}; }
-    else await slaOp(false);
-    updateUI(); setSS('ok','gesynchroniseerd');
-    const thuis=data.instellingen.thuis; if(thuis) document.getElementById('inp-van').value=thuis;
-  } catch(e){ setSS('error','sync fout'); toon('GitHub: '+e.message,true); const l=localStorage.getItem(LOCAL_KEY); if(l){data={adressen:[],vasteRitten:[],...JSON.parse(l)};updateUI();} }
+    if(f){
+      fileSha=f.sha;
+      const decoded=decodeURIComponent(escape(atob(f.content.replace(/\n/g,''))));
+      const remote=JSON.parse(decoded);
+      data={ritten:[],instellingen:defInst(),autos:[],adressen:[],vasteRitten:[],...remote};
+      // Zorg dat alle velden bestaan
+      if(!data.adressen)data.adressen=[];
+      if(!data.vasteRitten)data.vasteRitten=[];
+      if(!data.autos)data.autos=[];
+      if(!data.instellingen.standaardVoertuig)data.instellingen.standaardVoertuig='';
+    } else {
+      await slaOp(false);
+    }
+    // Sla ook lokaal op als fallback
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(data));
+    updateUI();
+    setSS('ok','gesynchroniseerd');
+    resetForm();
+  } catch(e){
+    setSS('error','sync fout');
+    // Probeer lokale cache
+    const l=localStorage.getItem(LOCAL_KEY);
+    if(l){
+      try {
+        data={adressen:[],vasteRitten:[],autos:[],...JSON.parse(l)};
+        if(!data.instellingen)data.instellingen=defInst();
+        updateUI(); resetForm();
+        toon('Sync mislukt — lokale data geladen. Klik ↺ om opnieuw te proberen.',true);
+      } catch { toon('Sync én lokale data mislukt: '+e.message,true); }
+    } else {
+      // Geen lokale data — vraag token opnieuw
+      toon('Kan GitHub niet bereiken: '+e.message+'. Controleer je token in Instellingen.',true);
+      setSS('error','geen verbinding');
+    }
+  }
 }
 async function slaOp(msg=true){
   if(!githubToken)return; setSS('syncing','opslaan…');
@@ -724,7 +754,7 @@ function planSync(){ clearTimeout(syncTimer); syncTimer=setTimeout(()=>slaOp(fal
 // UI
 // ════════════════════════════════════════════
 const TITELS = {invoer:'Nieuwe rit',ritten:'Ritten',rapport:'Rapport',adresboek:'Adresboek',instellingen:'Instellingen'};
-function updateUI(){ updateStats(); vulAC(); renderSnelknoppen(); laadInstUI(); toonSuggesties(); updateOdo(); }
+function updateUI(){ updateStats(); vulAC(); renderSnelknoppen(); laadInstUI(); toonSuggesties(); updateOdo(); resetForm(); }
 
 function updateOdo(){
   const metStand = data.ritten.filter(r => r.kmEind > 0 && r.datum);
