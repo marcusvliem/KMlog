@@ -1,6 +1,18 @@
 {
   "ritten": [
     {
+      "id": 1787869756518,
+      "datum": "2026-08-19",
+      "type": "zakelijk",
+      "van": "oud beijerland",
+      "naar": "waddinxveen",
+      "kmStart": 39846,
+      "kmEind": 39886,
+      "km": 40,
+      "doel": "",
+      "opmerking": "34-MX-HL – KTM 1290"
+    },
+    {
       "id": 1787869616091,
       "datum": "2026-08-18",
       "type": "zakelijk",
