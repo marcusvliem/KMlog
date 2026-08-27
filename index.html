@@ -714,7 +714,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '6.4.0';
+const APP_VERSION = '6.5.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1131,6 +1131,7 @@ async function berekenAfstand(){
     status.textContent = `✓ ${km} km gevonden — pas aan met ± als je een andere route reed`;
     btn.textContent = '🔄 Herberekenen';
     updateRetourLabel();
+    updateKmPill();
 
   } catch(e) {
     status.textContent = '⚠ Verbindingsfout: ' + e.message;
@@ -1144,13 +1145,24 @@ function pasAfstandAan(delta){
   berekendeAfstand = Math.max(1, berekendeAfstand + delta);
   document.getElementById('afstand-val').textContent = berekendeAfstand.toLocaleString('nl-NL');
   updateRetourLabel();
+  updateKmPill();
 }
 
 
 function updateKmPill(){
   const s=parseFloat(document.getElementById('inp-start').value), e=parseFloat(document.getElementById('inp-eind').value), el=document.getElementById('km-pill');
-  if(!isNaN(s)&&!isNaN(e)&&e>=s){el.textContent=(e-s).toLocaleString('nl-NL')+' km';el.classList.remove('empty');}
-  else{el.textContent='Vul standen in';el.classList.add('empty');}
+  if(!isNaN(s)&&!isNaN(e)&&e>=s){
+    el.textContent=(e-s).toLocaleString('nl-NL')+' km';
+    el.classList.remove('empty');
+  } else if(!isNaN(s)&&s>0&&berekendeAfstand){
+    // Toon berekende eindstand als preview
+    const eindstand = s + berekendeAfstand;
+    el.textContent=berekendeAfstand.toLocaleString('nl-NL')+' km → eindstand '+eindstand.toLocaleString('nl-NL');
+    el.classList.remove('empty');
+  } else {
+    el.textContent='Vul standen in';
+    el.classList.add('empty');
+  }
 }
 function updateRetourLabel(){
   const retour = document.getElementById('inp-retour')?.checked;
@@ -1177,9 +1189,15 @@ async function slaRitOp(){
   // Bepaal km
   let km = null, kmStart = 0, kmEind = 0;
   if(!isNaN(ks) && !isNaN(ke) && ke >= ks){
+    // Beide standen ingevuld — gebruik die
     km = ke - ks; kmStart = ks; kmEind = ke;
   } else if (berekendeAfstand !== null) {
     km = berekendeAfstand;
+    // Beginstand ingevuld maar geen eindstand → bereken eindstand automatisch
+    if(!isNaN(ks) && ks > 0){
+      kmStart = ks;
+      kmEind = ks + km;
+    }
   } else {
     toon('Bereken eerst de afstand of vul km-standen in', true); return;
   }
