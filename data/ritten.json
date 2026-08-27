@@ -19,5 +19,19 @@
     }
   ],
   "adressen": [],
-  "vasteRitten": []
+  "vasteRitten": [
+    {
+      "id": 1787859832834,
+      "naam": "MedITall retour",
+      "van": "Molenwindsingel 44 Culemborg",
+      "naar": "Havinghastraat 42 Alkmaar",
+      "km": 104,
+      "type": "zakelijk",
+      "doel": "",
+      "dagen": [
+        1,
+        3
+      ]
+    }
+  ]
 }
