@@ -12669,7 +12669,8 @@
       "dagen": [
         1,
         3
-      ]
+      ],
+      "altijdRetour": true
     }
   ]
 }
