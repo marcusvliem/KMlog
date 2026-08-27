@@ -411,6 +411,28 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
         <div id="suggestie-container"></div>
         <div id="snelknoppen-wrap"></div>
 
+        <!-- KILOMETERSTAND WIDGET -->
+        <div id="odo-widget" style="margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Huidige kilometerstand</div>
+            <div style="display:flex;align-items:baseline;gap:8px">
+              <div id="odo-val" style="font-family:var(--mono);font-size:36px;font-weight:500;color:var(--accent2);letter-spacing:-.02em;line-height:1">—</div>
+              <div style="font-size:14px;color:var(--text-dim);font-family:var(--mono)">km</div>
+            </div>
+            <div id="odo-sub" style="font-size:11px;color:var(--text-dim);margin-top:5px">Eindstand laatste rit</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;text-align:right">
+            <div>
+              <div style="font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px">Laatste rit</div>
+              <div id="odo-laatste-datum" style="font-family:var(--mono);font-size:12px;color:var(--text-mid)">—</div>
+            </div>
+            <div>
+              <div style="font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px">Voertuig</div>
+              <div id="odo-voertuig" style="font-family:var(--mono);font-size:12px;color:var(--text-mid)">—</div>
+            </div>
+          </div>
+        </div>
+
         <div class="card">
           <div class="card-header"><span class="card-title">Ritgegevens</span></div>
           <div class="form-row">
@@ -583,7 +605,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '4.0.0';
+const APP_VERSION = '4.1.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = localStorage.getItem(TOKEN_KEY)||'';
@@ -664,7 +686,33 @@ function planSync(){ clearTimeout(syncTimer); syncTimer=setTimeout(()=>slaOp(fal
 // UI
 // ════════════════════════════════════════════
 const TITELS = {invoer:'Nieuwe rit',ritten:'Ritten',rapport:'Rapport',adresboek:'Adresboek',instellingen:'Instellingen'};
-function updateUI(){ updateStats(); vulAC(); renderSnelknoppen(); laadInstUI(); toonSuggesties(); }
+function updateUI(){ updateStats(); vulAC(); renderSnelknoppen(); laadInstUI(); toonSuggesties(); updateOdo(); }
+
+function updateOdo(){
+  // Zoek rit met hoogste eindstand (meest recente echte kilometerstand)
+  const metStand = data.ritten.filter(r => r.kmEind > 0);
+  if (!metStand.length) return;
+
+  // Groepeer per voertuig op basis van opmerking (kenteken) — of neem gewoon hoogste eindstand
+  const hoogste = metStand.reduce((best, r) => r.kmEind > best.kmEind ? r : best);
+
+  document.getElementById('odo-val').textContent = hoogste.kmEind.toLocaleString('nl-NL');
+
+  const d = new Date(hoogste.datum + 'T12:00:00');
+  document.getElementById('odo-laatste-datum').textContent =
+    d.toLocaleDateString('nl-NL', {weekday:'short', day:'numeric', month:'long', year:'numeric'});
+
+  // Voertuig uit opmerking of autos lijst
+  const autoStr = hoogste.opmerking?.match(/([A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+)/)?.[1] || '';
+  const auto = (data.autos||[]).find(a => a.kenteken === autoStr);
+  document.getElementById('odo-voertuig').textContent = auto
+    ? `${auto.kenteken} – ${auto.omschrijving}`
+    : autoStr || '—';
+
+  // Sub label
+  document.getElementById('odo-sub').textContent =
+    `Eindstand na rit naar ${hoogste.naar || '—'}`;
+}
 
 function switchTab(tab,btn){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
@@ -749,7 +797,7 @@ async function slaRitOp(){
   if(!datum||!van||!naar){toon('Vul datum, vertrek en bestemming in',true);return;}
   if(isNaN(ks)||isNaN(ke)||ke<ks){toon('Controleer de km-standen',true);return;}
   data.ritten.unshift({id:Date.now(),datum,type,van,naar,kmStart:ks,kmEind:ke,km:ke-ks,doel,opmerking});
-  updateStats(); vulAC(); planSync(); toon((ke-ks)+' km opgeslagen'); resetForm();
+  updateStats(); vulAC(); updateOdo(); planSync(); toon((ke-ks)+' km opgeslagen'); resetForm();
 }
 function resetForm(){
   document.getElementById('inp-datum').valueAsDate=new Date();
