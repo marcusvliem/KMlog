@@ -708,7 +708,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '5.8.0';
+const APP_VERSION = '5.9.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1151,10 +1151,21 @@ async function slaRitOp(){
     toon('Bereken eerst de afstand of vul km-standen in', true); return;
   }
 
-  data.ritten.unshift({id:Date.now(),datum,type,van,naar,kmStart,kmEind,km,doel,opmerking});
+  if(bewerkRitId !== null){
+    // Bewerkmodus: overschrijf bestaande rit
+    const idx = data.ritten.findIndex(r=>r.id===bewerkRitId);
+    if(idx !== -1) data.ritten[idx] = {...data.ritten[idx], datum, type, van, naar, kmStart, kmEind, km, doel, opmerking};
+    bewerkRitId = null;
+    toon(km.toLocaleString('nl-NL') + ' km bijgewerkt ✓');
+  } else {
+    data.ritten.unshift({id:Date.now(),datum,type,van,naar,kmStart,kmEind,km,doel,opmerking});
+    toon(km.toLocaleString('nl-NL') + ' km opgeslagen ✓');
+  }
+
   berekendeAfstand = null;
+  document.querySelector('.form-actions .btn-primary').textContent='Rit opslaan';
   updateStats(); vulAC(); updateOdo(); planSync();
-  toon(km.toLocaleString('nl-NL') + ' km opgeslagen'); resetForm();
+  resetForm();
 }
 function resetForm(){
   // Datum: dag na de laatste rit, of vandaag als er geen ritten zijn
@@ -1199,6 +1210,9 @@ function resetForm(){
   updateKmPill(); resetAfstand();
   document.getElementById('bereken-btn').textContent='📍 Afstand berekenen';
   document.getElementById('bereken-btn').disabled=false;
+  // Reset bewerkmodus
+  bewerkRitId = null;
+  document.querySelector('.form-actions .btn-primary').textContent='Rit opslaan';
 }
 
 // ════════════════════════════════════════════
@@ -1261,6 +1275,7 @@ function renderRitten(){
       <div class="rit-body"><div class="rit-route">${r.van} → ${r.naar}</div><div class="rit-doel">${r.doel||r.opmerking||'—'}</div></div>
       <div class="rit-km"><div class="rit-km-val">${r.km.toLocaleString('nl-NL')} km</div><span class="badge badge-${r.type}">${bl}</span></div>
       <div style="display:flex;gap:4px">
+        <button class="btn btn-ghost btn-sm rit-del" onclick="bewerkRit(${r.id})" title="Bewerken" style="font-size:13px">✎</button>
         <button class="btn btn-ghost btn-sm rit-del" onclick="dupRit(${r.id})" title="Dupliceer rit" style="font-size:13px">⧉</button>
         <button class="btn btn-danger rit-del" onclick="delRit(${r.id})" title="Verwijder rit">✕</button>
       </div>
@@ -1274,6 +1289,44 @@ function renderRitten(){
 }
 function goPag(p){pagina=p;renderRitten();}
 async function delRit(id){ if(!confirm('Rit verwijderen?'))return; data.ritten=data.ritten.filter(r=>r.id!==id); updateStats();renderRitten();planSync();toon('Verwijderd'); }
+
+let bewerkRitId = null; // id van rit die bewerkt wordt
+
+function bewerkRit(id){
+  const r=data.ritten.find(x=>x.id===id); if(!r)return;
+  bewerkRitId = id;
+  switchTab('invoer', document.querySelector('.nav-item'));
+
+  // Datum
+  document.getElementById('inp-datum').value = r.datum;
+  document.getElementById('inp-type').value = r.type;
+  document.getElementById('inp-van').value = r.van;
+  document.getElementById('inp-naar').value = r.naar;
+  document.getElementById('inp-doel').value = r.doel||'';
+  document.getElementById('inp-opmerking').value = r.opmerking||'';
+
+  // Km standen
+  document.getElementById('inp-start').value = r.kmStart||'';
+  document.getElementById('inp-eind').value = r.kmEind||'';
+  updateKmPill();
+
+  // Afstand tonen
+  berekendeAfstand = r.km;
+  document.getElementById('afstand-val').textContent = r.km.toLocaleString('nl-NL');
+  const aanpas = document.getElementById('afstand-aanpassen');
+  aanpas.style.display='flex'; aanpas.style.alignItems='center'; aanpas.style.gap='8px'; aanpas.style.marginLeft='auto';
+  document.getElementById('afstand-status').textContent = `✓ ${r.km} km — pas aan indien nodig`;
+  document.getElementById('route-info').style.display='none';
+  document.getElementById('bereken-btn').textContent='🔄 Herberekenen';
+
+  // Voertuig
+  const kt=r.opmerking?.match(/([A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+)/)?.[1]||data.instellingen.standaardVoertuig||'';
+  const vsel=document.getElementById('inp-voertuig'); if(vsel)vsel.value=kt;
+
+  // Opslaan knop aanpassen
+  document.querySelector('.form-actions .btn-primary').textContent='✎ Wijzigingen opslaan';
+  toon('Rit geladen — pas aan en sla op');
+}
 function dupRit(id){
   const orig=data.ritten.find(r=>r.id===id); if(!orig)return;
   // Vul het formulier in met de gegevens van deze rit
