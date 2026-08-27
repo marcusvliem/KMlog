@@ -632,33 +632,18 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
 // ════════════════════════════════════════════
 // CONFIG
 // ════════════════════════════════════════════
-// ── Storage helpers — werkt ook op file:// ──────────────────
-// localStorage is geblokkeerd op file://, gebruik cookie als fallback
-function opslaanToken(t){
-  try { localStorage.setItem(TOKEN_KEY,t); } catch(e){}
-  try { document.cookie=`${TOKEN_KEY}=${t};max-age=31536000;SameSite=Strict`; } catch(e){}
-}
-function laadToken(){
-  try { const t=localStorage.getItem(TOKEN_KEY); if(t)return t; } catch(e){}
-  try {
-    const m=document.cookie.split(';').find(c=>c.trim().startsWith(TOKEN_KEY+'='));
-    if(m)return m.split('=')[1].trim();
-  } catch(e){}
-  return '';
-}
-function opslaanLokaal(key,val){
-  try { localStorage.setItem(key,val); } catch(e){}
-}
-function laadLokaal(key){
-  try { return localStorage.getItem(key); } catch(e){ return null; }
-}
+// ── Storage helpers ──────────────────────────────────────────
+function opslaanToken(t){ try{localStorage.setItem(TOKEN_KEY,t);}catch(e){} }
+function laadToken(){ try{return localStorage.getItem(TOKEN_KEY)||'';}catch(e){return '';} }
+function opslaanLokaal(key,val){ try{localStorage.setItem(key,val);}catch(e){} }
+function laadLokaal(key){ try{return localStorage.getItem(key);}catch(e){return null;} }
 let berekendeAfstand = null; // in km, van Google Maps
 const GITHUB_REPO = 'KMlog';
 const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '4.8.0';
+const APP_VERSION = '4.9.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
