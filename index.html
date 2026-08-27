@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KmLog — Kilometerregistratie</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #181818;
+    --surface2: #222222;
+    --border: #2a2a2a;
+    --accent: #c8f53d;
+    --text: #f0f0f0;
+    --text-muted: #666;
+    --text-mid: #999;
+    --danger: #ff4d4d;
+    --radius: 12px;
+    --mono: 'DM Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; overflow-x: hidden; }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(200,245,61,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(200,245,61,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
+  }
+  .app { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+  .logo { display: flex; align-items: baseline; gap: 0.4rem; }
+  .logo-main { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.04em; color: var(--accent); }
+  .logo-sub { font-family: var(--mono); font-size: 0.7rem; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .header-right { display: flex; align-items: center; gap: 1.5rem; }
+  .header-stats { display: flex; gap: 2rem; align-items: center; }
+  .stat { text-align: right; }
+  .stat-val { font-family: var(--mono); font-size: 1.4rem; font-weight: 500; color: var(--accent); line-height: 1; }
+  .stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-top: 2px; }
+
+  /* SYNC STATUS */
+  .sync-indicator {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-family: var(--mono); font-size: 0.7rem;
+    color: var(--text-muted); cursor: pointer;
+    padding: 0.4rem 0.75rem; border: 1px solid var(--border);
+    border-radius: 20px; transition: all 0.2s;
+  }
+  .sync-indicator:hover { border-color: var(--accent); color: var(--text); }
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); transition: background 0.3s; }
+  .sync-dot.ok { background: #4dff91; }
+  .sync-dot.syncing { background: var(--accent); animation: pulse 1s infinite; }
+  .sync-dot.error { background: var(--danger); }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .tabs { display: flex; gap: 0; margin-bottom: 2rem; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+  .tab-btn { flex: 1; padding: 0.75rem 1rem; background: transparent; border: none; color: var(--text-muted); font-family: var(--sans); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; border-right: 1px solid var(--border); }
+  .tab-btn:last-child { border-right: none; }
+  .tab-btn.active { background: var(--accent); color: #0f0f0f; }
+  .tab-btn:not(.active):hover { background: var(--surface2); color: var(--text); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.75rem; margin-bottom: 1.5rem; }
+  .form-title { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+  .form-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+  input, select, textarea { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 0.85rem; color: var(--text); font-family: var(--mono); font-size: 0.9rem; outline: none; transition: border-color 0.2s, box-shadow 0.2s; width: 100%; }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(200,245,61,0.1); }
+  select option { background: var(--surface2); }
+  textarea { resize: vertical; min-height: 70px; font-size: 0.85rem; }
+
+  .km-diff { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 0.85rem; font-family: var(--mono); font-size: 1.1rem; font-weight: 500; color: var(--accent); min-height: 42px; display: flex; align-items: center; }
+  .km-diff.empty { color: var(--text-muted); font-size: 0.8rem; }
+
+  .btn { padding: 0.75rem 1.5rem; border-radius: 8px; border: none; font-family: var(--sans); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; }
+  .btn-primary { background: var(--accent); color: #0f0f0f; }
+  .btn-primary:hover { background: #d4ff4a; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(200,245,61,0.3); }
+  .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid transparent; padding: 0.4rem 0.6rem; font-size: 0.75rem; }
+  .btn-danger:hover { background: rgba(255,77,77,0.1); border-color: var(--danger); }
+  .form-actions { display: flex; gap: 0.75rem; margin-top: 1.25rem; justify-content: flex-end; }
+
+  .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--accent); color: #0f0f0f; padding: 0.75rem 1.25rem; border-radius: 8px; font-weight: 700; font-size: 0.85rem; transform: translateY(100px); opacity: 0; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 999; pointer-events: none; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.error { background: var(--danger); color: white; }
+
+  .filter-bar { display: flex; gap: 0.75rem; margin-bottom: 1rem; align-items: center; flex-wrap: wrap; }
+  .filter-bar input, .filter-bar select { flex: 1; min-width: 140px; font-size: 0.8rem; padding: 0.55rem 0.75rem; }
+  .search-box { flex: 2 !important; }
+
+  .ritten-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .rit-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; display: grid; grid-template-columns: 80px 1fr 1fr auto; gap: 1rem; align-items: center; transition: border-color 0.2s; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  .rit-item:hover { border-color: #333; background: #1c1c1c; }
+  .rit-item.zakelijk { border-left: 3px solid var(--accent); }
+  .rit-item.prive { border-left: 3px solid #555; }
+  .rit-date { font-family: var(--mono); font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; }
+  .rit-date strong { display: block; font-size: 1rem; color: var(--text); font-weight: 500; }
+  .rit-route { min-width: 0; }
+  .rit-van-naar { font-size: 0.85rem; color: var(--text); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rit-doel { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rit-km { text-align: right; }
+  .rit-km-val { font-family: var(--mono); font-size: 1.1rem; font-weight: 500; color: var(--accent); }
+  .rit-km-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .rit-badge { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-top: 3px; }
+  .badge-zakelijk { background: rgba(200,245,61,0.15); color: var(--accent); }
+  .badge-prive { background: rgba(255,255,255,0.06); color: var(--text-muted); }
+  .rit-actions { display: flex; gap: 0.25rem; }
+
+  .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
+  .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.3; }
+  .empty-state p { font-size: 0.85rem; line-height: 1.6; }
+
+  .rapport-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+  .rapport-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
+  .rapport-card.highlight { border-color: var(--accent); background: rgba(200,245,61,0.05); }
+  .rapport-val { font-family: var(--mono); font-size: 2rem; font-weight: 500; color: var(--accent); line-height: 1; margin-bottom: 0.25rem; }
+  .rapport-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
+  .rapport-sub { font-size: 0.75rem; color: var(--text-mid); margin-top: 0.25rem; }
+
+  .settings-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; }
+  .settings-section h3 { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+  .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .danger-zone { border-color: rgba(255,77,77,0.3) !important; }
+  .danger-zone h3 { color: var(--danger) !important; }
+
+  .export-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-top: 1.5rem; }
+  .export-section h3 { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; }
+  .export-buttons { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+  .maand-tabel { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 1rem; }
+  .maand-tabel th { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+  .maand-tabel td { padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.8rem; color: var(--text-mid); }
+  .maand-tabel tr:last-child td { border-bottom: none; }
+  .maand-tabel td:first-child { color: var(--text); font-family: var(--sans); }
+  .maand-tabel td.accent { color: var(--accent); }
+
+  .pagination { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1.5rem; align-items: center; }
+  .page-info { font-family: var(--mono); font-size: 0.75rem; color: var(--text-muted); padding: 0 1rem; }
+
+  /* SETUP MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; max-width: 480px; width: 100%; }
+  .modal h2 { font-size: 1.4rem; font-weight: 800; color: var(--accent); margin-bottom: 0.5rem; }
+  .modal p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.6; }
+  .modal .form-group { margin-bottom: 1rem; }
+
+  @media (max-width: 600px) {
+    .header-stats { gap: 1rem; }
+    .stat-val { font-size: 1.1rem; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+    .rapport-grid { grid-template-columns: 1fr 1fr; }
+    .rit-item { grid-template-columns: 60px 1fr auto auto; }
+    .rit-km { display: none; }
+    .settings-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SETUP MODAL (shown if no token stored) -->
+<div class="modal-overlay" id="setup-modal" style="display:none">
+  <div class="modal">
+    <h2>KmLog instellen</h2>
+    <p>Vul je GitHub gegevens in om automatische sync in te schakelen. Je data wordt opgeslagen in je privé GitHub repository.</p>
+    <div class="form-group">
+      <label>GitHub Token</label>
+      <input type="password" id="setup-token" placeholder="ghp_...">
+    </div>
+    <div class="form-group">
+      <label>GitHub Gebruikersnaam</label>
+      <input type="text" id="setup-user" placeholder="marcusvliem">
+    </div>
+    <div class="form-group">
+      <label>Repository naam</label>
+      <input type="text" id="setup-repo" placeholder="KMlog">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="slaGithubConfig()">Verbinden</button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <header>
+    <div class="logo">
+      <span class="logo-main">KmLog</span>
+      <span class="logo-sub">Kilometerregistratie</span>
+    </div>
+    <div class="header-right">
+      <div class="sync-indicator" onclick="syncNu()" title="Klik om te synchroniseren">
+        <div class="sync-dot" id="sync-dot"></div>
+        <span id="sync-label">sync</span>
+      </div>
+      <div class="header-stats">
+        <div class="stat">
+          <div class="stat-val" id="stat-jaar-km">0</div>
+          <div class="stat-label">km dit jaar</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val" id="stat-ritten">0</div>
+          <div class="stat-label">ritten</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('invoer', this)">+ Nieuwe rit</button>
+    <button class="tab-btn" onclick="switchTab('ritten', this)">Ritten</button>
+    <button class="tab-btn" onclick="switchTab('rapport', this)">Rapport</button>
+    <button class="tab-btn" onclick="switchTab('instellingen', this)">Instellingen</button>
+  </div>
+
+  <!-- INVOER -->
+  <div class="panel active" id="panel-invoer">
+    <div class="form-card">
+      <div class="form-title">Rit details</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Datum</label>
+          <input type="date" id="inp-datum">
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="inp-type">
+            <option value="zakelijk">Zakelijk</option>
+            <option value="prive">Privé</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Vertrekplaats</label>
+          <input type="text" id="inp-van" placeholder="bijv. Thuiskantoor" list="adressen-van">
+          <datalist id="adressen-van"></datalist>
+        </div>
+        <div class="form-group">
+          <label>Bestemming</label>
+          <input type="text" id="inp-naar" placeholder="bijv. Klant Utrecht" list="adressen-naar">
+          <datalist id="adressen-naar"></datalist>
+        </div>
+        <div class="form-group">
+          <label>Beginstand (km)</label>
+          <input type="number" id="inp-km-start" placeholder="bijv. 45230" min="0">
+        </div>
+        <div class="form-group">
+          <label>Eindstand (km)</label>
+          <input type="number" id="inp-km-eind" placeholder="bijv. 45312" min="0">
+        </div>
+        <div class="form-group">
+          <label>Gereden km</label>
+          <div class="km-diff empty" id="km-diff">Vul begin- en eindstand in</div>
+        </div>
+        <div class="form-group">
+          <label>Doel / Relatie</label>
+          <input type="text" id="inp-doel" placeholder="bijv. Klantbezoek, Vergadering..." list="doelen-list">
+          <datalist id="doelen-list"></datalist>
+        </div>
+        <div class="form-group full">
+          <label>Opmerking (optioneel)</label>
+          <textarea id="inp-opmerking" placeholder="Extra info..."></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="resetForm()">Wissen</button>
+        <button class="btn btn-primary" onclick="slaRitOp()">✓ Rit opslaan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RITTEN -->
+  <div class="panel" id="panel-ritten">
+    <div class="filter-bar">
+      <input type="text" class="search-box" id="filter-zoek" placeholder="Zoek op bestemming, doel..." oninput="renderRitten()">
+      <select id="filter-type" onchange="renderRitten()">
+        <option value="">Alle types</option>
+        <option value="zakelijk">Zakelijk</option>
+        <option value="prive">Privé</option>
+      </select>
+      <select id="filter-maand" onchange="renderRitten()">
+        <option value="">Alle maanden</option>
+      </select>
+    </div>
+    <div class="ritten-list" id="ritten-list"></div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+  <!-- RAPPORT -->
+  <div class="panel" id="panel-rapport">
+    <div class="rapport-grid">
+      <div class="rapport-card highlight">
+        <div class="rapport-val" id="rap-zakelijk-jaar">0</div>
+        <div class="rapport-label">Zakelijk km dit jaar</div>
+        <div class="rapport-sub" id="rap-zakelijk-vergoeding">€ 0,00 vergoeding</div>
+      </div>
+      <div class="rapport-card">
+        <div class="rapport-val" id="rap-prive-jaar">0</div>
+        <div class="rapport-label">Privé km dit jaar</div>
+      </div>
+      <div class="rapport-card">
+        <div class="rapport-val" id="rap-totaal-jaar">0</div>
+        <div class="rapport-label">Totaal km dit jaar</div>
+        <div class="rapport-sub" id="rap-ritten-jaar">0 ritten</div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <h3>Overzicht per maand</h3>
+      <table class="maand-tabel">
+        <thead><tr><th>Maand</th><th>Ritten</th><th>Zakelijk km</th><th>Privé km</th><th>Vergoeding</th></tr></thead>
+        <tbody id="maand-tbody"></tbody>
+      </table>
+    </div>
+    <div class="export-section">
+      <h3>Exporteren</h3>
+      <div class="export-buttons">
+        <button class="btn btn-primary" onclick="exportCSV()">⬇ Export CSV (Belastingdienst)</button>
+        <button class="btn btn-ghost" onclick="exportJSON()">⬇ Lokale backup JSON</button>
+        <button class="btn btn-ghost" onclick="forceerSync()">☁ Nu synchroniseren</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSTELLINGEN -->
+  <div class="panel" id="panel-instellingen">
+    <div class="settings-section">
+      <h3>Bedrijfsgegevens</h3>
+      <div class="settings-grid">
+        <div class="form-group">
+          <label>Naam / Bedrijfsnaam</label>
+          <input type="text" id="set-naam" placeholder="Jan Jansen">
+        </div>
+        <div class="form-group">
+          <label>KvK-nummer</label>
+          <input type="text" id="set-kvk" placeholder="12345678">
+        </div>
+        <div class="form-group">
+          <label>Btw-nummer</label>
+          <input type="text" id="set-btw" placeholder="NL123456789B01">
+        </div>
+        <div class="form-group">
+          <label>Standaard vertrekplaats</label>
+          <input type="text" id="set-thuis" placeholder="bijv. Thuiskantoor Beesd">
+        </div>
+      </div>
+      <div class="form-actions"><button class="btn btn-primary" onclick="slaInstellingenOp()">Opslaan</button></div>
+    </div>
+    <div class="settings-section">
+      <h3>Km-vergoeding & jaar</h3>
+      <div class="settings-grid">
+        <div class="form-group">
+          <label>Vergoeding per km (€)</label>
+          <input type="number" id="set-vergoeding" placeholder="0.23" step="0.01" min="0" max="1">
+        </div>
+        <div class="form-group">
+          <label>Rapportage jaar</label>
+          <input type="number" id="set-jaar" placeholder="2025">
+        </div>
+      </div>
+      <div class="form-actions"><button class="btn btn-primary" onclick="slaInstellingenOp()">Opslaan</button></div>
+    </div>
+    <div class="settings-section">
+      <h3>Auto's / Voertuigen</h3>
+      <div id="autos-list" style="margin-bottom:1rem;"></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Kenteken</label>
+          <input type="text" id="auto-kenteken" placeholder="AB-12-CD">
+        </div>
+        <div class="form-group">
+          <label>Omschrijving</label>
+          <input type="text" id="auto-omschrijving" placeholder="bijv. Tesla Model 3">
+        </div>
+      </div>
+      <div class="form-actions"><button class="btn btn-ghost" onclick="voegAutoToe()">+ Auto toevoegen</button></div>
+    </div>
+    <div class="settings-section">
+      <h3>GitHub Sync</h3>
+      <div class="settings-grid">
+        <div class="form-group">
+          <label>GitHub Token</label>
+          <input type="password" id="set-token" placeholder="ghp_...">
+        </div>
+        <div class="form-group">
+          <label>Gebruikersnaam / Repository</label>
+          <input type="text" id="set-github-info" placeholder="gebruikersnaam/repo" readonly style="color:var(--text-mid)">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="updateToken()">Token bijwerken</button>
+        <button class="btn btn-primary" onclick="forceerSync()">☁ Nu synchroniseren</button>
+      </div>
+    </div>
+    <div class="settings-section danger-zone">
+      <h3>Gevaarlijke zone</h3>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+        <button class="btn btn-ghost" onclick="importJSON()">⬆ Lokale backup terugzetten</button>
+        <button class="btn btn-danger" onclick="verwijderAlles()">✕ Alle data verwijderen</button>
+      </div>
+      <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.75rem;">Data wordt automatisch gesynchroniseerd met GitHub. Maak ook lokale backups als extra veiligheid.</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="import-file" accept=".json" style="display:none" onchange="verwerkImport(event)">
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const GITHUB_USER = 'marcusvliem';
+const GITHUB_REPO = 'KMlog';
+const DATA_FILE = 'data/ritten.json';
+const LOCAL_KEY = 'kmlog_data';
+const TOKEN_KEY = 'kmlog_github_token';
+
+// ============================================================
+// STATE
+// ============================================================
+let data = { ritten: [], instellingen: defaultInstellingen(), autos: [] };
+let githubToken = localStorage.getItem(TOKEN_KEY) || '';
+let fileSha = null;
+let syncTimer = null;
+let huidigePagina = 1;
+const PER_PAGINA = 20;
+
+function defaultInstellingen() {
+  return { naam: '', kvk: '', btw: '', thuis: '', vergoeding: 0.23, jaar: new Date().getFullYear() };
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', async () => {
+  document.getElementById('inp-datum').valueAsDate = new Date();
+  document.getElementById('inp-km-start').addEventListener('input', updateKmDiff);
+  document.getElementById('inp-km-eind').addEventListener('input', updateKmDiff);
+
+  if (!githubToken) {
+    // Pre-fill setup modal with known values
+    document.getElementById('setup-token').value = '';
+    document.getElementById('setup-user').value = GITHUB_USER;
+    document.getElementById('setup-repo').value = GITHUB_REPO;
+    document.getElementById('setup-modal').style.display = 'flex';
+  } else {
+    await laadVanGithub();
+  }
+});
+
+// ============================================================
+// GITHUB SETUP
+// ============================================================
+async function slaGithubConfig() {
+  const token = document.getElementById('setup-token').value.trim();
+  if (!token) { toon('Voer een token in', true); return; }
+  githubToken = token;
+  localStorage.setItem(TOKEN_KEY, token);
+  document.getElementById('setup-modal').style.display = 'none';
+  await laadVanGithub();
+}
+
+function updateToken() {
+  const token = document.getElementById('set-token').value.trim();
+  if (!token) { toon('Voer een geldig token in', true); return; }
+  githubToken = token;
+  localStorage.setItem(TOKEN_KEY, token);
+  toon('Token bijgewerkt');
+}
+
+// ============================================================
+// GITHUB SYNC
+// ============================================================
+function setSyncStatus(status, label) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  dot.className = 'sync-dot ' + status;
+  lbl.textContent = label;
+}
+
+async function githubGet(path) {
+  const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${path}`, {
+    headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' }
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error('GitHub fout: ' + res.status);
+  return res.json();
+}
+
+async function githubPut(path, content, sha) {
+  const body = { message: 'KmLog sync ' + new Date().toISOString(), content: btoa(unescape(encodeURIComponent(content))) };
+  if (sha) body.sha = sha;
+  const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${path}`, {
+    method: 'PUT',
+    headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error('Opslaan mislukt: ' + res.status);
+  return res.json();
+}
+
+async function laadVanGithub() {
+  setSyncStatus('syncing', 'laden...');
+  try {
+    const file = await githubGet(DATA_FILE);
+    if (file) {
+      fileSha = file.sha;
+      const decoded = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
+      const remote = JSON.parse(decoded);
+      data = remote;
+    } else {
+      // Eerste keer — maak data/ritten.json aan
+      await slaOpGithub(false);
+    }
+    updateUI();
+    setSyncStatus('ok', 'gesynchroniseerd');
+    if (data.instellingen.thuis) document.getElementById('inp-van').value = data.instellingen.thuis;
+  } catch (e) {
+    setSyncStatus('error', 'sync fout');
+    toon('Kon niet laden van GitHub: ' + e.message, true);
+    // Fall back to localStorage
+    const local = localStorage.getItem(LOCAL_KEY);
+    if (local) { data = JSON.parse(local); updateUI(); }
+  }
+}
+
+async function slaOpGithub(toonMelding = true) {
+  if (!githubToken) return;
+  setSyncStatus('syncing', 'opslaan...');
+  try {
+    const json = JSON.stringify(data, null, 2);
+    const result = await githubPut(DATA_FILE, json, fileSha);
+    fileSha = result.content.sha;
+    localStorage.setItem(LOCAL_KEY, json); // local backup
+    setSyncStatus('ok', 'gesynchroniseerd');
+    if (toonMelding) toon('Opgeslagen & gesynchroniseerd ✓');
+  } catch (e) {
+    setSyncStatus('error', 'sync fout');
+    // Save locally anyway
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(data));
+    toon('Lokaal opgeslagen, sync mislukt', true);
+  }
+}
+
+async function syncNu() {
+  await laadVanGithub();
+  toon('Gesynchroniseerd met GitHub ✓');
+}
+
+async function forceerSync() {
+  await slaOpGithub(true);
+}
+
+function planAutoSync() {
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => slaOpGithub(false), 3000);
+}
+
+function updateUI() {
+  updateStats();
+  vulAutocomplete();
+  laadInstellingenUI();
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(tab, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  btn.classList.add('active');
+  if (tab === 'ritten') { vulMaandFilter(); renderRitten(); }
+  if (tab === 'rapport') renderRapport();
+  if (tab === 'instellingen') laadInstellingenUI();
+}
+
+// ============================================================
+// FORM
+// ============================================================
+function updateKmDiff() {
+  const start = parseFloat(document.getElementById('inp-km-start').value);
+  const eind = parseFloat(document.getElementById('inp-km-eind').value);
+  const el = document.getElementById('km-diff');
+  if (!isNaN(start) && !isNaN(eind) && eind >= start) {
+    el.textContent = (eind - start).toLocaleString('nl-NL') + ' km';
+    el.classList.remove('empty');
+  } else {
+    el.textContent = 'Vul begin- en eindstand in';
+    el.classList.add('empty');
+  }
+}
+
+async function slaRitOp() {
+  const datum = document.getElementById('inp-datum').value;
+  const type = document.getElementById('inp-type').value;
+  const van = document.getElementById('inp-van').value.trim();
+  const naar = document.getElementById('inp-naar').value.trim();
+  const kmStart = parseFloat(document.getElementById('inp-km-start').value);
+  const kmEind = parseFloat(document.getElementById('inp-km-eind').value);
+  const doel = document.getElementById('inp-doel').value.trim();
+  const opmerking = document.getElementById('inp-opmerking').value.trim();
+
+  if (!datum || !van || !naar) { toon('Vul datum, vertrek en bestemming in', true); return; }
+  if (isNaN(kmStart) || isNaN(kmEind) || kmEind < kmStart) { toon('Controleer de km-standen', true); return; }
+
+  const rit = { id: Date.now(), datum, type, van, naar, kmStart, kmEind, km: kmEind - kmStart, doel, opmerking };
+  data.ritten.unshift(rit);
+  updateStats();
+  vulAutocomplete();
+  toon('Rit opgeslagen — ' + rit.km.toLocaleString('nl-NL') + ' km');
+  resetForm();
+  planAutoSync();
+}
+
+function resetForm() {
+  document.getElementById('inp-datum').valueAsDate = new Date();
+  document.getElementById('inp-type').value = 'zakelijk';
+  document.getElementById('inp-van').value = data.instellingen.thuis || '';
+  document.getElementById('inp-naar').value = '';
+  document.getElementById('inp-km-start').value = '';
+  document.getElementById('inp-km-eind').value = '';
+  document.getElementById('inp-doel').value = '';
+  document.getElementById('inp-opmerking').value = '';
+  updateKmDiff();
+}
+
+// ============================================================
+// AUTOCOMPLETE
+// ============================================================
+function vulAutocomplete() {
+  const adressen = [...new Set(data.ritten.flatMap(r => [r.van, r.naar]).filter(Boolean))];
+  const doelen = [...new Set(data.ritten.map(r => r.doel).filter(Boolean))];
+  ['adressen-van','adressen-naar'].forEach(id => {
+    document.getElementById(id).innerHTML = adressen.map(a => `<option value="${a}">`).join('');
+  });
+  document.getElementById('doelen-list').innerHTML = doelen.map(d => `<option value="${d}">`).join('');
+}
+
+// ============================================================
+// STATS
+// ============================================================
+function updateStats() {
+  const jaar = data.instellingen.jaar || new Date().getFullYear();
+  const jaarRitten = data.ritten.filter(r => r.datum && r.datum.startsWith(jaar.toString()));
+  const km = jaarRitten.reduce((s, r) => s + r.km, 0);
+  document.getElementById('stat-jaar-km').textContent = km.toLocaleString('nl-NL');
+  document.getElementById('stat-ritten').textContent = data.ritten.length.toLocaleString('nl-NL');
+}
+
+// ============================================================
+// RITTEN PANEL
+// ============================================================
+function vulMaandFilter() {
+  const maanden = [...new Set(data.ritten.map(r => r.datum?.slice(0,7)).filter(Boolean))].sort().reverse();
+  const sel = document.getElementById('filter-maand');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Alle maanden</option>' + maanden.map(m => {
+    const naam = new Date(m+'-01').toLocaleDateString('nl-NL', {year:'numeric', month:'long'});
+    return `<option value="${m}" ${m===cur?'selected':''}>${naam}</option>`;
+  }).join('');
+}
+
+function renderRitten() {
+  const zoek = document.getElementById('filter-zoek').value.toLowerCase();
+  const type = document.getElementById('filter-type').value;
+  const maand = document.getElementById('filter-maand').value;
+
+  let gefilterd = data.ritten.filter(r => {
+    if (type && r.type !== type) return false;
+    if (maand && !r.datum?.startsWith(maand)) return false;
+    if (zoek && ![r.van,r.naar,r.doel,r.opmerking].join(' ').toLowerCase().includes(zoek)) return false;
+    return true;
+  });
+
+  const totaal = gefilterd.length;
+  const pagina = gefilterd.slice((huidigePagina-1)*PER_PAGINA, huidigePagina*PER_PAGINA);
+  const list = document.getElementById('ritten-list');
+
+  if (!totaal) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">🚗</div><p>Geen ritten gevonden.<br>Voeg je eerste rit toe via "+ Nieuwe rit".</p></div>`;
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  list.innerHTML = pagina.map(r => {
+    const d = new Date(r.datum + 'T12:00:00');
+    const dag = d.toLocaleDateString('nl-NL', {day:'2-digit', month:'short'});
+    return `<div class="rit-item ${r.type}">
+      <div class="rit-date"><strong>${dag}</strong>${d.getFullYear()}</div>
+      <div class="rit-route">
+        <div class="rit-van-naar">${r.van} → ${r.naar}</div>
+        <div class="rit-doel">${r.doel || r.opmerking || '—'}</div>
+      </div>
+      <div class="rit-km">
+        <div class="rit-km-val">${r.km.toLocaleString('nl-NL')}</div>
+        <div class="rit-km-label">km</div>
+        <div class="rit-badge badge-${r.type}">${r.type}</div>
+      </div>
+      <div class="rit-actions">
+        <button class="btn btn-danger" onclick="verwijderRit(${r.id})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  const paginas = Math.ceil(totaal/PER_PAGINA);
+  document.getElementById('pagination').innerHTML = paginas <= 1 ? '' : `
+    <button class="btn btn-ghost" onclick="naarPagina(${huidigePagina-1})" ${huidigePagina===1?'disabled':''}>‹</button>
+    <span class="page-info">Pagina ${huidigePagina} van ${paginas}</span>
+    <button class="btn btn-ghost" onclick="naarPagina(${huidigePagina+1})" ${huidigePagina===paginas?'disabled':''}>›</button>`;
+}
+
+function naarPagina(p) { huidigePagina = p; renderRitten(); }
+
+async function verwijderRit(id) {
+  if (!confirm('Deze rit verwijderen?')) return;
+  data.ritten = data.ritten.filter(r => r.id !== id);
+  updateStats();
+  renderRitten();
+  planAutoSync();
+  toon('Rit verwijderd');
+}
+
+// ============================================================
+// RAPPORT
+// ============================================================
+function renderRapport() {
+  const jaar = data.instellingen.jaar || new Date().getFullYear();
+  const verg = data.instellingen.vergoeding || 0.23;
+  const jr = data.ritten.filter(r => r.datum?.startsWith(jaar.toString()));
+  const zak = jr.filter(r => r.type==='zakelijk').reduce((s,r)=>s+r.km,0);
+  const prv = jr.filter(r => r.type==='prive').reduce((s,r)=>s+r.km,0);
+
+  document.getElementById('rap-zakelijk-jaar').textContent = zak.toLocaleString('nl-NL');
+  document.getElementById('rap-zakelijk-vergoeding').textContent = '€ '+(zak*verg).toFixed(2).replace('.',',') + ' vergoeding';
+  document.getElementById('rap-prive-jaar').textContent = prv.toLocaleString('nl-NL');
+  document.getElementById('rap-totaal-jaar').textContent = (zak+prv).toLocaleString('nl-NL');
+  document.getElementById('rap-ritten-jaar').textContent = jr.length + ' ritten';
+
+  const md = {};
+  jr.forEach(r => {
+    const m = r.datum.slice(0,7);
+    if (!md[m]) md[m] = {ritten:0,zakelijk:0,prive:0};
+    md[m].ritten++; md[m][r.type] += r.km;
+  });
+  const tbody = document.getElementById('maand-tbody');
+  const maanden = Object.keys(md).sort().reverse();
+  tbody.innerHTML = !maanden.length
+    ? `<tr><td colspan="5" style="color:var(--text-muted);text-align:center;padding:2rem">Geen ritten dit jaar</td></tr>`
+    : maanden.map(m => {
+        const d = md[m];
+        const naam = new Date(m+'-01').toLocaleDateString('nl-NL',{year:'numeric',month:'long'});
+        return `<tr><td>${naam}</td><td>${d.ritten}</td><td class="accent">${d.zakelijk.toLocaleString('nl-NL')} km</td><td>${d.prive.toLocaleString('nl-NL')} km</td><td class="accent">€ ${(d.zakelijk*verg).toFixed(2).replace('.',',')}</td></tr>`;
+      }).join('');
+}
+
+// ============================================================
+// EXPORT
+// ============================================================
+function exportCSV() {
+  const jaar = data.instellingen.jaar || new Date().getFullYear();
+  const ritten = data.ritten.filter(r => r.datum?.startsWith(jaar.toString()));
+  if (!ritten.length) { toon('Geen ritten om te exporteren'); return; }
+  const headers = ['Datum','Type','Vertrek','Bestemming','Beginstand','Eindstand','Kilometers','Doel','Opmerking'];
+  const rows = ritten.map(r => [r.datum,r.type,`"${r.van}"`,`"${r.naar}"`,r.kmStart,r.kmEind,r.km,`"${r.doel||''}"`,`"${r.opmerking||''}"`]);
+  download(`kmlog_${jaar}.csv`, [headers.join(';'),...rows.map(r=>r.join(';'))].join('\n'), 'text/csv;charset=utf-8;');
+  toon('CSV geëxporteerd');
+}
+
+function exportJSON() {
+  download('kmlog_backup_'+Date.now()+'.json', JSON.stringify(data,null,2), 'application/json');
+  toon('Lokale backup opgeslagen');
+}
+
+function importJSON() { document.getElementById('import-file').click(); }
+
+function verwerkImport(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (ev) => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (!imported.ritten) { toon('Ongeldig bestand', true); return; }
+      const bestaand = new Set(data.ritten.map(r=>r.id));
+      const nieuw = imported.ritten.filter(r=>!bestaand.has(r.id));
+      data.ritten = [...data.ritten,...nieuw].sort((a,b)=>new Date(b.datum)-new Date(a.datum));
+      updateUI();
+      await slaOpGithub(false);
+      toon(nieuw.length + ' ritten geïmporteerd ✓');
+    } catch { toon('Fout bij inlezen', true); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function download(naam, inhoud, type) {
+  const a = Object.assign(document.createElement('a'), {href: URL.createObjectURL(new Blob([inhoud],{type})), download: naam});
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+// ============================================================
+// INSTELLINGEN
+// ============================================================
+function laadInstellingenUI() {
+  const s = data.instellingen;
+  document.getElementById('set-naam').value = s.naam||'';
+  document.getElementById('set-kvk').value = s.kvk||'';
+  document.getElementById('set-btw').value = s.btw||'';
+  document.getElementById('set-thuis').value = s.thuis||'';
+  document.getElementById('set-vergoeding').value = s.vergoeding||0.23;
+  document.getElementById('set-jaar').value = s.jaar||new Date().getFullYear();
+  document.getElementById('set-token').value = githubToken ? '••••••••••••••••' : '';
+  document.getElementById('set-github-info').value = GITHUB_USER+'/'+GITHUB_REPO;
+  renderAutos();
+}
+
+async function slaInstellingenOp() {
+  data.instellingen.naam = document.getElementById('set-naam').value;
+  data.instellingen.kvk = document.getElementById('set-kvk').value;
+  data.instellingen.btw = document.getElementById('set-btw').value;
+  data.instellingen.thuis = document.getElementById('set-thuis').value;
+  data.instellingen.vergoeding = parseFloat(document.getElementById('set-vergoeding').value)||0.23;
+  data.instellingen.jaar = parseInt(document.getElementById('set-jaar').value)||new Date().getFullYear();
+  updateStats();
+  await slaOpGithub(true);
+}
+
+function renderAutos() {
+  const autos = data.autos||[];
+  document.getElementById('autos-list').innerHTML = !autos.length
+    ? '<p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem">Nog geen voertuigen</p>'
+    : autos.map((a,i)=>`<div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem;padding:.5rem .75rem;background:var(--surface2);border-radius:8px;">
+        <span style="font-family:var(--mono);color:var(--accent);font-size:.85rem">${a.kenteken}</span>
+        <span style="font-size:.8rem;color:var(--text-mid);flex:1">${a.omschrijving}</span>
+        <button class="btn btn-danger" onclick="verwijderAuto(${i})">✕</button>
+      </div>`).join('');
+}
+
+async function voegAutoToe() {
+  const kenteken = document.getElementById('auto-kenteken').value.trim().toUpperCase();
+  const omschrijving = document.getElementById('auto-omschrijving').value.trim();
+  if (!kenteken) { toon('Vul een kenteken in', true); return; }
+  if (!data.autos) data.autos = [];
+  data.autos.push({kenteken, omschrijving});
+  document.getElementById('auto-kenteken').value = '';
+  document.getElementById('auto-omschrijving').value = '';
+  renderAutos();
+  planAutoSync();
+  toon('Auto toegevoegd');
+}
+
+async function verwijderAuto(i) {
+  data.autos.splice(i,1);
+  renderAutos();
+  planAutoSync();
+}
+
+async function verwijderAlles() {
+  if (!confirm('Alle ritten en instellingen verwijderen? Dit kan niet ongedaan worden gemaakt.')) return;
+  if (!confirm('Laatste waarschuwing — ook op GitHub wordt dit verwijderd.')) return;
+  data = {ritten:[], instellingen:defaultInstellingen(), autos:[]};
+  fileSha = null;
+  updateUI();
+  await slaOpGithub(false);
+  toon('Alle data verwijderd');
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer;
+function toon(bericht, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = bericht;
+  t.className = 'toast' + (isError?' error':'') + ' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
