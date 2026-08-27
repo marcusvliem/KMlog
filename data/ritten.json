@@ -1,6 +1,18 @@
 {
   "ritten": [
     {
+      "id": 1787869616091,
+      "datum": "2026-08-18",
+      "type": "zakelijk",
+      "van": "Molenwindsingel 44 Culemborg",
+      "naar": "oud beijerland",
+      "kmStart": 38751,
+      "kmEind": 38830,
+      "km": 79,
+      "doel": "",
+      "opmerking": "34-MX-HL – KTM 1290"
+    },
+    {
       "id": 1787868988591,
       "datum": "2026-08-17",
       "type": "zakelijk",
