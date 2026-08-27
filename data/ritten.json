@@ -12668,7 +12668,13 @@
       "omschrijving": "Skoda Superb"
     }
   ],
-  "adressen": [],
+  "adressen": [
+    {
+      "naam": "Thuis",
+      "adres": "Molenwindsingel 44 Culemborg",
+      "cat": "thuis"
+    }
+  ],
   "vasteRitten": [
     {
       "id": 1787859832834,
