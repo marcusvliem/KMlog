@@ -714,7 +714,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '7.2.0';
+const APP_VERSION = '7.3.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1437,6 +1437,10 @@ function renderRitten(){
   const list=document.getElementById('rit-list');
   if(!tot){list.innerHTML=`<div class="empty"><div class="empty-icon">🚗</div>Geen ritten gevonden.</div>`;document.getElementById('pager').innerHTML='';return;}
   // Bouw een set van datums met meerdere ritten (voor pijltjes)
+  // Bouw een set van datums met meerdere ritten (voor pijltjes)
+  const dagtelling = {};
+  gef.forEach(r => { dagtelling[r.datum] = (dagtelling[r.datum]||0)+1; });
+
   // Bouw opzoektabel: per voertuig, wat is de eindstand van de vorige KTM rit?
   const kt = data.instellingen.standaardVoertuig||'';
   // Gesorteerde KTM ritten voor sequentie-check
