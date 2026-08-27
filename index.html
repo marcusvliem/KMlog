@@ -383,6 +383,10 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
       <div class="dag-rij" id="dag-rij"></div>
       <div style="font-size:11px;color:var(--text-dim);margin-top:5px">App toont een herinnering als je op deze dag opent</div>
     </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0">
+      <input type="checkbox" id="wm-altijd-retour" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+      <label for="wm-altijd-retour" style="font-size:13px;color:var(--text-mid);cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400">Altijd als retour registreren (heen + terug in één klik)</label>
+    </div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="sluitOverlay('ww-modal')">Annuleren</button>
       <button class="btn btn-primary" onclick="slaVasteRitOp()">Opslaan</button>
@@ -703,7 +707,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '5.5.0';
+const APP_VERSION = '5.6.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -976,6 +980,8 @@ function toonSuggesties(){
 }
 async function bevestigSug(naam,retour){
   const r=(data.vasteRitten||[]).find(v=>v.naam===naam); if(!r)return;
+  // altijdRetour overschrijft de keuze
+  if(r.altijdRetour) retour=true;
   const datum=new Date().toISOString().slice(0,10), id=String(r.id||r.naam);
   data.ritten.unshift({id:Date.now(),datum,type:r.type,van:r.van,naar:r.naar,kmStart:0,kmEind:r.km,km:r.km,doel:r.doel||r.naam,opmerking:'Vaste rit'+(retour?' (heen)':''),vasteRitId:id});
   if(retour) data.ritten.unshift({id:Date.now()+1,datum,type:r.type,van:r.naar,naar:r.van,kmStart:0,kmEind:r.km,km:r.km,doel:r.doel||r.naam,opmerking:'Vaste rit (retour)',vasteRitId:id});
@@ -992,16 +998,18 @@ function renderSnelknoppen(){
   w.innerHTML=`<div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">Vaste ritten</div>
     <div class="snelknop-grid" style="margin-bottom:20px">
       ${vr.map((r,i)=>`<div class="snelknop" onclick="regVaste(${i},false)">
-        <div class="sk-type">${r.type}</div>
+        <div class="sk-type">${r.type}${r.altijdRetour?' · altijd retour':''}</div>
         <div class="sk-naam">${r.naam}</div>
         <div class="sk-route">${r.van} → ${r.naar}</div>
-        <div class="sk-km">${r.km} km</div>
-        <div class="sk-retour" onclick="event.stopPropagation();regVaste(${i},true)">⇄ retour ${r.km*2} km</div>
+        <div class="sk-km">${r.altijdRetour ? r.km*2+' km (retour)' : r.km+' km'}</div>
+        ${!r.altijdRetour?`<div class="sk-retour" onclick="event.stopPropagation();regVaste(${i},true)">⇄ retour ${r.km*2} km</div>`:''} 
       </div>`).join('')}
     </div>`;
 }
 async function regVaste(idx,retour){
-  const r=data.vasteRitten[idx], datum=document.getElementById('inp-datum').value||new Date().toISOString().slice(0,10), id=String(r.id||r.naam);
+  const r=data.vasteRitten[idx];
+  if(r.altijdRetour) retour=true;
+  const datum=document.getElementById('inp-datum').value||new Date().toISOString().slice(0,10), id=String(r.id||r.naam);
   data.ritten.unshift({id:Date.now(),datum,type:r.type,van:r.van,naar:r.naar,kmStart:0,kmEind:r.km,km:r.km,doel:r.doel||r.naam,opmerking:'Vaste rit'+(retour?' (heen)':''),vasteRitId:id});
   if(retour)data.ritten.unshift({id:Date.now()+1,datum,type:r.type,van:r.naar,naar:r.van,kmStart:0,kmEind:r.km,km:r.km,doel:r.doel||r.naam,opmerking:'Vaste rit (retour)',vasteRitId:id});
   updateStats(); planSync(); toonSuggesties(); toon(retour?`Retour ${r.km*2} km ✓`:`${r.km} km ✓`);
@@ -1417,17 +1425,18 @@ function toggleDag(i){
 function openWwModal(idx=null){
   wwEditIdx=idx; selDagen=[];
   document.getElementById('ww-titel').textContent=idx!==null?'Vaste rit bewerken':'Vaste rit toevoegen';
-  if(idx!==null){const r=data.vasteRitten[idx];document.getElementById('wm-naam').value=r.naam;document.getElementById('wm-van').value=r.van;document.getElementById('wm-naar').value=r.naar;document.getElementById('wm-km').value=r.km;document.getElementById('wm-type').value=r.type;document.getElementById('wm-doel').value=r.doel||'';selDagen=[...(r.dagen||[])];}
-  else{document.getElementById('wm-naam').value='';document.getElementById('wm-van').value=data.instellingen.thuis||'';document.getElementById('wm-naar').value='';document.getElementById('wm-km').value='';document.getElementById('wm-type').value='zakelijk';document.getElementById('wm-doel').value='';}
+  if(idx!==null){const r=data.vasteRitten[idx];document.getElementById('wm-naam').value=r.naam;document.getElementById('wm-van').value=r.van;document.getElementById('wm-naar').value=r.naar;document.getElementById('wm-km').value=r.km;document.getElementById('wm-type').value=r.type;document.getElementById('wm-doel').value=r.doel||'';document.getElementById('wm-altijd-retour').checked=!!r.altijdRetour;selDagen=[...(r.dagen||[])];}
+  else{document.getElementById('wm-naam').value='';document.getElementById('wm-van').value=data.instellingen.thuis||'';document.getElementById('wm-naar').value='';document.getElementById('wm-km').value='';document.getElementById('wm-type').value='zakelijk';document.getElementById('wm-doel').value='';document.getElementById('wm-altijd-retour').checked=false;}
   vulAC(); renderDagKnoppen();
   document.getElementById('ww-modal').style.display='flex';
 }
 async function slaVasteRitOp(){
   const naam=document.getElementById('wm-naam').value.trim(),van=document.getElementById('wm-van').value.trim(),naar=document.getElementById('wm-naar').value.trim(),km=parseFloat(document.getElementById('wm-km').value);
   if(!naam||!van||!naar||isNaN(km)||km<=0){toon('Vul alle velden in',true);return;}
-  const rit={id:Date.now(),naam,van,naar,km,type:document.getElementById('wm-type').value,doel:document.getElementById('wm-doel').value.trim(),dagen:[...selDagen]};
+  const altijdRetour=document.getElementById('wm-altijd-retour').checked;
+  const rit={id:Date.now(),naam,van,naar,km,type:document.getElementById('wm-type').value,doel:document.getElementById('wm-doel').value.trim(),dagen:[...selDagen],altijdRetour};
   if(!data.vasteRitten)data.vasteRitten=[];
-  if(wwEditIdx!==null)data.vasteRitten[wwEditIdx]=rit;else data.vasteRitten.push(rit);
+  if(wwEditIdx!==null){rit.id=data.vasteRitten[wwEditIdx].id||rit.id; data.vasteRitten[wwEditIdx]=rit;}else data.vasteRitten.push(rit);
   sluitOverlay('ww-modal');renderSnelknoppen();renderAdresboek();toonSuggesties();planSync();toon('Vaste rit opgeslagen');
 }
 async function delVaste(i){if(!confirm('Verwijderen?'))return;data.vasteRitten.splice(i,1);renderSnelknoppen();renderAdresboek();planSync();toon('Verwijderd');}
