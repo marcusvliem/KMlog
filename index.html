@@ -714,7 +714,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '6.7.0';
+const APP_VERSION = '6.8.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1436,16 +1436,29 @@ function renderRitten(){
   const tot=gef.length, slice=gef.slice((pagina-1)*PER_PAGINA,pagina*PER_PAGINA);
   const list=document.getElementById('rit-list');
   if(!tot){list.innerHTML=`<div class="empty"><div class="empty-icon">🚗</div>Geen ritten gevonden.</div>`;document.getElementById('pager').innerHTML='';return;}
-  list.innerHTML=slice.map(r=>{
+  // Bouw een set van datums met meerdere ritten (voor pijltjes)
+  const dagtelling = {};
+  gef.forEach(r => { dagtelling[r.datum] = (dagtelling[r.datum]||0)+1; });
+
+  list.innerHTML=slice.map((r,sliceIdx)=>{
     const d=new Date(r.datum+'T12:00:00'),dag=d.toLocaleDateString('nl-NL',{day:'2-digit',month:'short'});
     const bl=r.type==='woonwerk'?'woon-werk':r.type;
     const isRetour = r.opmerking?.toLowerCase().includes('retour') || r.doel?.toLowerCase().includes('retour');
     const retourBadge = isRetour ? `<span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:rgba(100,160,255,.12);color:var(--info);letter-spacing:.04em;margin-left:4px">⇄ retour</span>` : '';
+    const heeftMeerdere = dagtelling[r.datum] > 1;
+    // Zoek positie in de volledige gefilterde lijst
+    const gefIdx = gef.findIndex(x=>x.id===r.id);
+    const kanOmhoog = heeftMeerdere && gefIdx > 0 && gef[gefIdx-1].datum === r.datum;
+    const kanOmlaag = heeftMeerdere && gefIdx < gef.length-1 && gef[gefIdx+1].datum === r.datum;
+    const pijltjes = heeftMeerdere ? `
+      <button class="btn btn-ghost btn-sm rit-del" onclick="verschuifRit(${r.id},-1)" title="Omhoog" style="font-size:11px;padding:4px 6px" ${kanOmhoog?'':'disabled style="opacity:.2;font-size:11px;padding:4px 6px"'}>↑</button>
+      <button class="btn btn-ghost btn-sm rit-del" onclick="verschuifRit(${r.id},+1)" title="Omlaag" style="font-size:11px;padding:4px 6px" ${kanOmlaag?'':'disabled style="opacity:.2;font-size:11px;padding:4px 6px"'}>↓</button>` : '';
     return `<div class="rit ${r.type}">
       <div class="rit-date"><strong>${dag}</strong>${d.getFullYear()}</div>
       <div class="rit-body"><div class="rit-route">${r.van} → ${r.naar}${retourBadge}</div><div class="rit-doel">${r.doel||r.opmerking||'—'}</div></div>
       <div class="rit-km"><div class="rit-km-val">${r.km.toLocaleString('nl-NL')} km</div><span class="badge badge-${r.type}">${bl}</span></div>
       <div style="display:flex;gap:4px">
+        ${pijltjes}
         <button class="btn btn-ghost btn-sm rit-del" onclick="bewerkRit(${r.id})" title="Bewerken" style="font-size:13px">✎</button>
         <button class="btn btn-ghost btn-sm rit-del" onclick="dupRit(${r.id})" title="Dupliceer rit" style="font-size:13px">⧉</button>
         <button class="btn btn-danger rit-del" onclick="delRit(${r.id})" title="Verwijder rit">✕</button>
@@ -1459,6 +1472,33 @@ function renderRitten(){
     <button class="btn btn-ghost btn-sm" onclick="goPag(${pagina+1})" ${pagina===pages?'disabled':''}>Volgende ›</button>`;
 }
 function goPag(p){pagina=p;renderRitten();}
+
+function verschuifRit(id, richting){
+  // Zoek de rit en zijn buur op dezelfde datum
+  const idx = data.ritten.findIndex(r=>r.id===id);
+  if(idx === -1) return;
+  const datum = data.ritten[idx].datum;
+
+  // Zoek de buurrit op dezelfde datum in de gewenste richting
+  let buurIdx = -1;
+  if(richting === -1){
+    // Omhoog = eerder in de array (hogere index = ouder in gesorteerde lijst)
+    for(let i=idx+1; i<data.ritten.length; i++){
+      if(data.ritten[i].datum === datum){ buurIdx = i; break; }
+    }
+  } else {
+    // Omlaag = later in de array
+    for(let i=idx-1; i>=0; i--){
+      if(data.ritten[i].datum === datum){ buurIdx = i; break; }
+    }
+  }
+  if(buurIdx === -1) return;
+
+  // Wissel de twee ritten
+  [data.ritten[idx], data.ritten[buurIdx]] = [data.ritten[buurIdx], data.ritten[idx]];
+  planSync();
+  renderRitten();
+}
 async function delRit(id){ if(!confirm('Rit verwijderen?'))return; data.ritten=data.ritten.filter(r=>r.id!==id); updateStats();renderRitten();planSync();toon('Verwijderd'); }
 
 let bewerkRitId = null; // id van rit die bewerkt wordt
