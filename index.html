@@ -703,7 +703,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '5.4.0';
+const APP_VERSION = '5.5.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -731,7 +731,9 @@ function slaanPinHash(h){ try{localStorage.setItem(PIN_KEY,h);}catch(e){} }
 
 // ── PIN UI ───────────────────────────────────────────────────
 function toonPinScherm(modus='check'){
-  pinModus = modus; pinBuffer = ''; pinNieuw = '';
+  pinModus = modus;
+  pinBuffer = '';
+  if(modus !== 'bevestigen') pinNieuw = ''; // bewaar pinNieuw bij doorsturen naar bevestigen
   updatePinDots();
   const sub = document.getElementById('pin-subtitel');
   if(modus==='check') sub.textContent = 'Voer je pincode in';
