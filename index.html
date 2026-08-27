@@ -276,7 +276,16 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
 .toast.ok::before{content:'✓  ';color:var(--success)}
 .toast.fout{border-color:rgba(224,85,85,.3)}.toast.fout::before{content:'✕  ';color:var(--danger)}
 
-/* ─── RESPONSIVE ──────────────────────────── */
+/* ─── PINCODE ─────────────────────────────── */
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border2);background:transparent;transition:all .15s}
+.pin-dot.gevuld{background:var(--accent);border-color:var(--accent)}
+.pin-dot.fout{background:var(--danger);border-color:var(--danger);animation:shake .3s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.pin-key{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;font-family:var(--sans);font-size:20px;font-weight:600;color:var(--text);cursor:pointer;transition:all .1s;-webkit-tap-highlight-color:transparent}
+.pin-key:hover{background:var(--surface2);border-color:var(--border2)}
+.pin-key:active{background:var(--surface3);transform:scale(.95)}
+.pin-key-ghost{background:transparent;border-color:transparent;color:var(--text-mid)}
+.pin-key-ghost:hover{background:var(--surface2);border-color:var(--border)}
 @media(max-width:640px){
   .sidebar{transform:translateX(-100%);transition:transform .25s}
   .sidebar.open{transform:translateX(0)}
@@ -291,7 +300,38 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
 </head>
 <body>
 
-<!-- SETUP MODAL -->
+<!-- PINCODE SCHERM -->
+<div id="pin-scherm" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:300;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0">
+  <div style="text-align:center;max-width:320px;width:100%;padding:0 24px">
+    <div style="width:48px;height:48px;background:var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#111318;margin:0 auto 20px;font-family:var(--mono)">K</div>
+    <div style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px">KmLog</div>
+    <div id="pin-subtitel" style="font-size:13px;color:var(--text-dim);margin-bottom:32px">Voer je pincode in</div>
+
+    <!-- PIN DOTS -->
+    <div style="display:flex;gap:12px;justify-content:center;margin-bottom:32px" id="pin-dots">
+      <div class="pin-dot"></div><div class="pin-dot"></div>
+      <div class="pin-dot"></div><div class="pin-dot"></div>
+    </div>
+
+    <!-- NUMPAD -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:240px;margin:0 auto">
+      <button class="pin-key" onclick="pinInvoer('1')">1</button>
+      <button class="pin-key" onclick="pinInvoer('2')">2</button>
+      <button class="pin-key" onclick="pinInvoer('3')">3</button>
+      <button class="pin-key" onclick="pinInvoer('4')">4</button>
+      <button class="pin-key" onclick="pinInvoer('5')">5</button>
+      <button class="pin-key" onclick="pinInvoer('6')">6</button>
+      <button class="pin-key" onclick="pinInvoer('7')">7</button>
+      <button class="pin-key" onclick="pinInvoer('8')">8</button>
+      <button class="pin-key" onclick="pinInvoer('9')">9</button>
+      <button class="pin-key pin-key-ghost" onclick="pinWis()" style="font-size:18px">⌫</button>
+      <button class="pin-key" onclick="pinInvoer('0')">0</button>
+      <button class="pin-key pin-key-ghost" id="pin-ok-btn" onclick="pinBevestig()" style="font-size:12px;font-weight:700;opacity:0.3" disabled>OK</button>
+    </div>
+
+    <div id="pin-fout" style="font-size:12px;color:var(--danger);margin-top:20px;min-height:18px"></div>
+  </div>
+</div>
 <div class="overlay" id="setup-modal" style="display:none">
   <div class="modal">
     <h2>KmLog verbinden</h2>
@@ -611,7 +651,19 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
             <button class="btn btn-primary" onclick="forceerSync()">Synchroniseren</button>
           </div>
         </div>
-        <div class="set-section danger-section">
+        <div class="set-section">
+          <div class="set-title">Beveiliging</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text)" id="pin-status-label">Pincode: niet ingesteld</div>
+              <div style="font-size:11px;color:var(--text-dim);margin-top:3px">Verplicht bij elke sessie</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost btn-sm" onclick="toonPinScherm('instellen')">🔒 Pincode instellen</button>
+              <button class="btn btn-danger" id="pin-verwijder-btn" onclick="verwijderPin()" style="display:none">Verwijderen</button>
+            </div>
+          </div>
+        </div>
           <div class="set-title">Gevaarlijk</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn btn-ghost" onclick="document.getElementById('import-modal').style.display='flex'">↑ EasyRit importeren</button>
@@ -644,7 +696,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '5.0.0';
+const APP_VERSION = '5.1.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -656,12 +708,109 @@ let selDagen = [];
 
 function defInst(){ return {naam:'',kvk:'',btw:'',thuis:'',vergoeding:0.23,jaar:new Date().getFullYear()}; }
 
-// ════════════════════════════════════════════
-// INIT
-// ════════════════════════════════════════════
+const PIN_KEY = 'kmlog_pin_hash';
+let pinBuffer = '';
+let pinModus = 'check'; // 'check' | 'instellen' | 'bevestigen'
+let pinNieuw = '';
+
+// ── Simpele hash (SHA-256 via Web Crypto) ────────────────────
+async function hashPin(pin){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('kmlog_'+pin));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function laadPinHash(){ try{return localStorage.getItem(PIN_KEY)||'';}catch(e){return '';} }
+function slaanPinHash(h){ try{localStorage.setItem(PIN_KEY,h);}catch(e){} }
+
+// ── PIN UI ───────────────────────────────────────────────────
+function toonPinScherm(modus='check'){
+  pinModus = modus; pinBuffer = ''; pinNieuw = '';
+  updatePinDots();
+  const sub = document.getElementById('pin-subtitel');
+  if(modus==='check') sub.textContent = 'Voer je pincode in';
+  if(modus==='instellen') sub.textContent = 'Kies een nieuwe pincode (4 cijfers)';
+  if(modus==='bevestigen') sub.textContent = 'Voer de pincode nogmaals in';
+  document.getElementById('pin-fout').textContent = '';
+  document.getElementById('pin-scherm').style.display = 'flex';
+}
+
+function verbergPinScherm(){
+  document.getElementById('pin-scherm').style.display = 'none';
+}
+
+function updatePinDots(){
+  const dots = document.querySelectorAll('.pin-dot');
+  dots.forEach((d,i) => {
+    d.classList.toggle('gevuld', i < pinBuffer.length);
+    d.classList.remove('fout');
+  });
+  const okBtn = document.getElementById('pin-ok-btn');
+  okBtn.disabled = pinBuffer.length < 4;
+  okBtn.style.opacity = pinBuffer.length >= 4 ? '1' : '0.3';
+}
+
+function pinInvoer(cijfer){
+  if(pinBuffer.length >= 4) return;
+  pinBuffer += cijfer;
+  updatePinDots();
+  if(pinBuffer.length === 4) setTimeout(pinBevestig, 150);
+}
+
+function pinWis(){
+  pinBuffer = pinBuffer.slice(0,-1);
+  updatePinDots();
+  document.getElementById('pin-fout').textContent = '';
+}
+
+async function pinBevestig(){
+  if(pinBuffer.length < 4) return;
+
+  if(pinModus === 'check'){
+    const hash = await hashPin(pinBuffer);
+    if(hash === laadPinHash()){
+      verbergPinScherm();
+    } else {
+      document.querySelectorAll('.pin-dot').forEach(d => d.classList.add('fout'));
+      document.getElementById('pin-fout').textContent = 'Onjuiste pincode';
+      setTimeout(() => { pinBuffer=''; updatePinDots(); document.getElementById('pin-fout').textContent=''; }, 600);
+    }
+
+  } else if(pinModus === 'instellen'){
+    pinNieuw = pinBuffer;
+    pinBuffer = '';
+    updatePinDots();
+    toonPinScherm('bevestigen');
+
+  } else if(pinModus === 'bevestigen'){
+    if(pinBuffer === pinNieuw){
+      const hash = await hashPin(pinBuffer);
+      slaanPinHash(hash);
+      verbergPinScherm();
+      toon('Pincode ingesteld ✓');
+    } else {
+      document.querySelectorAll('.pin-dot').forEach(d => d.classList.add('fout'));
+      document.getElementById('pin-fout').textContent = 'Pincodes komen niet overeen';
+      setTimeout(() => { pinBuffer=''; pinNieuw=''; updatePinDots(); toonPinScherm('instellen'); }, 800);
+    }
+  }
+}
+
+// Keyboard support
+document.addEventListener('keydown', e => {
+  if(document.getElementById('pin-scherm').style.display === 'none') return;
+  if(e.key >= '0' && e.key <= '9') pinInvoer(e.key);
+  if(e.key === 'Backspace') pinWis();
+  if(e.key === 'Enter' && pinBuffer.length === 4) pinBevestig();
+});
 document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('inp-start').addEventListener('input', updateKmPill);
   document.getElementById('inp-eind').addEventListener('input', updateKmPill);
+
+  // Pin check bij opstarten
+  const pinHash = laadPinHash();
+  if(pinHash){
+    toonPinScherm('check');
+  }
 
   if (!githubToken) { document.getElementById('setup-modal').style.display='flex'; }
   else { await laadVanGithub(); checkUpdate(); }
@@ -1251,6 +1400,7 @@ function laadInstUI(){
   document.getElementById('set-token').value=githubToken?'••••••••••••••••':'';
   document.getElementById('set-repo').value=GITHUB_USER+'/'+GITHUB_REPO;
   renderAutos();
+  updatePinStatusLabel();
 }
 async function slaInstellingenOp(){
   data.instellingen.naam=document.getElementById('set-naam').value; data.instellingen.kvk=document.getElementById('set-kvk').value;
@@ -1297,7 +1447,20 @@ async function voegAutoToe(){
   renderAutos(); planSync(); toon('Auto toegevoegd');
 }
 async function delAuto(i){data.autos.splice(i,1);renderAutos();planSync();}
-async function verwijderAlles(){
+async function verwijderPin(){
+  if(!confirm('Pincode verwijderen?')) return;
+  try{localStorage.removeItem(PIN_KEY);}catch(e){}
+  updatePinStatusLabel();
+  toon('Pincode verwijderd');
+}
+
+function updatePinStatusLabel(){
+  const heeft = !!laadPinHash();
+  const lbl = document.getElementById('pin-status-label');
+  const btn = document.getElementById('pin-verwijder-btn');
+  if(lbl) lbl.textContent = heeft ? 'Pincode: ingesteld ✓' : 'Pincode: niet ingesteld';
+  if(btn) btn.style.display = heeft ? 'inline-flex' : 'none';
+}
   if(!confirm('Alle data verwijderen?'))return; if(!confirm('Dit kan niet ongedaan worden gemaakt.'))return;
   data={ritten:[],instellingen:defInst(),autos:[],adressen:[],vasteRitten:[]}; fileSha=null; updateUI(); await slaOp(false); toon('Data gewist');
 }
