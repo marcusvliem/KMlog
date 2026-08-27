@@ -714,7 +714,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '6.9.0';
+const APP_VERSION = '7.0.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1478,15 +1478,17 @@ function verschuifRit(id, richting){
   if(idx === -1) return;
   const datum = data.ritten[idx].datum;
 
-  // data.ritten[0] = meest recent. "Omhoog" in scherm = eerder op de dag = hogere index in array
-  // richting -1 = omhoog in scherm = zoek naar hogere index (oudere rit zelfde dag)
-  // richting +1 = omlaag in scherm = zoek naar lagere index (nieuwere rit zelfde dag)
+  // Array: index 0 = eerste in scherm (bovenaan)
+  // Omlaag (+1) in scherm = hogere array index
+  // Omhoog (-1) in scherm = lagere array index
   let buurIdx = -1;
-  if(richting === -1){
+  if(richting === +1){
+    // Zoek eerste buur met zelfde datum op hogere index
     for(let i=idx+1; i<data.ritten.length; i++){
       if(data.ritten[i].datum === datum){ buurIdx = i; break; }
     }
   } else {
+    // Zoek eerste buur met zelfde datum op lagere index
     for(let i=idx-1; i>=0; i--){
       if(data.ritten[i].datum === datum){ buurIdx = i; break; }
     }
