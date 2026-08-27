@@ -605,7 +605,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '4.1.0';
+const APP_VERSION = '4.2.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = localStorage.getItem(TOKEN_KEY)||'';
@@ -643,8 +643,13 @@ async function checkUpdate(){
     const remote = decodeURIComponent(escape(atob(f.content.replace(/\n/g,''))));
     const m = remote.match(/APP_VERSION = '([^']+)'/);
     if (!m || m[1]===APP_VERSION) return;
-    toon('Nieuwe versie beschikbaar — herladen...');
-    setTimeout(()=>{ localStorage.setItem(LOCAL_KEY,JSON.stringify(data)); window.location.href=URL.createObjectURL(new Blob([remote],{type:'text/html'})); },1500);
+    // Download nieuwe versie als bestand — gebruiker opent het zelf
+    const blob = new Blob([remote], {type:'text/html'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'KmLog.html'; a.click();
+    URL.revokeObjectURL(url);
+    toon('Nieuwe versie gedownload — vervang je huidige bestand');
   } catch{}
 }
 
