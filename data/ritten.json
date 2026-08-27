@@ -1,6 +1,18 @@
 {
   "ritten": [
     {
+      "id": 1787869261593,
+      "datum": "2026-08-17",
+      "type": "zakelijk",
+      "van": "Molenwindsingel 44 Culemborg",
+      "naar": "Havinghastraat 42 Alkmaar",
+      "kmStart": 38647,
+      "kmEind": 38855,
+      "km": 208,
+      "doel": "MedITall retour",
+      "opmerking": "34-MX-HL – KTM 1290"
+    },
+    {
       "id": 1787868988591,
       "datum": "2026-07-15",
       "type": "zakelijk",
