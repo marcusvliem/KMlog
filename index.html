@@ -634,7 +634,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '4.4.0';
+const APP_VERSION = '4.5.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = localStorage.getItem(TOKEN_KEY)||'';
@@ -650,7 +650,6 @@ function defInst(){ return {naam:'',kvk:'',btw:'',thuis:'',vergoeding:0.23,jaar:
 // INIT
 // ════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', async () => {
-  document.getElementById('inp-datum').valueAsDate = new Date();
   document.getElementById('inp-start').addEventListener('input', updateKmPill);
   document.getElementById('inp-eind').addEventListener('input', updateKmPill);
 
@@ -939,11 +938,37 @@ async function slaRitOp(){
   toon(km.toLocaleString('nl-NL') + ' km opgeslagen'); resetForm();
 }
 function resetForm(){
-  document.getElementById('inp-datum').valueAsDate=new Date();
+  // Datum: dag na de laatste rit, of vandaag als er geen ritten zijn
+  const laatste = data.ritten.find(r => r.datum);
+  if (laatste) {
+    const d = new Date(laatste.datum + 'T12:00:00');
+    d.setDate(d.getDate() + 1);
+    // Niet verder dan vandaag
+    const vandaag = new Date(); vandaag.setHours(12,0,0,0);
+    document.getElementById('inp-datum').valueAsDate = d > vandaag ? vandaag : d;
+  } else {
+    document.getElementById('inp-datum').valueAsDate = new Date();
+  }
+
   document.getElementById('inp-type').value='zakelijk';
   document.getElementById('inp-van').value=data.instellingen.thuis||'';
   document.getElementById('inp-naar').value='';
-  document.getElementById('inp-start').value='';
+
+  // Beginstand: hoogste eindstand van actief voertuig
+  const metStand = data.ritten.filter(r => r.kmEind > 0);
+  if (metStand.length) {
+    const gesorteerd = [...metStand].sort((a,b) => a.datum < b.datum ? 1 : -1);
+    const actief = gesorteerd[0];
+    const ktKenteken = actief.opmerking?.match(/([A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+)/)?.[1] || null;
+    const zelfdeAuto = ktKenteken
+      ? metStand.filter(r => r.opmerking?.includes(ktKenteken))
+      : metStand;
+    const hoogste = zelfdeAuto.reduce((best,r) => r.kmEind > best.kmEind ? r : best);
+    document.getElementById('inp-start').value = hoogste.kmEind;
+  } else {
+    document.getElementById('inp-start').value='';
+  }
+
   document.getElementById('inp-eind').value='';
   document.getElementById('inp-doel').value='';
   document.getElementById('inp-opmerking').value='';
