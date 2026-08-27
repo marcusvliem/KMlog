@@ -714,7 +714,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '6.6.0';
+const APP_VERSION = '6.7.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1338,7 +1338,15 @@ function resetForm(){
   }
 
   document.getElementById('inp-type').value='zakelijk';
-  document.getElementById('inp-van').value=data.instellingen.thuis||'';
+  // Vertrekplaats = bestemming van de laatste rit (of thuisadres als er geen ritten zijn)
+  const standaardKt2 = data.instellingen.standaardVoertuig||'';
+  const ktRittenVan = standaardKt2
+    ? data.ritten.filter(r => r.naar && r.opmerking?.includes(standaardKt2))
+    : data.ritten.filter(r => r.naar);
+  const laaststeNaar = ktRittenVan.length
+    ? ktRittenVan.sort((a,b) => a.datum < b.datum ? 1 : a.datum > b.datum ? -1 : b.id - a.id)[0].naar
+    : null;
+  document.getElementById('inp-van').value = laaststeNaar || data.instellingen.thuis || '';
   document.getElementById('inp-naar').value='';
 
   // Beginstand: hoogste eindstand van het standaard voertuig
