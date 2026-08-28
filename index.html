@@ -749,7 +749,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '7.6.0';
+const APP_VERSION = '7.7.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1949,13 +1949,12 @@ function updatePinStatusLabel(){
   if(btn) btn.style.display = heeft ? 'inline-flex' : 'none';
 }
 
-async function updateBottomNav(activeEl){
+function updateBottomNav(activeEl){
   document.querySelectorAll('.bottom-nav-item').forEach(el=>el.classList.remove('active'));
   if(activeEl) activeEl.classList.add('active');
 }
 
 // Sync dot ook in bottom nav tonen
-const origToon = window.toon;
 function syncBottomNavDot(){
   const dot = document.getElementById('bn-sync-dot');
   const mainDot = document.getElementById('sync-dot');
