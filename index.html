@@ -298,14 +298,38 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
 .pin-key-ghost{background:transparent;border-color:transparent;color:var(--text-mid)}
 .pin-key-ghost:hover{background:var(--surface2);border-color:var(--border)}
 @media(max-width:640px){
-  .sidebar{transform:translateX(-100%);transition:transform .25s}
-  .sidebar.open{transform:translateX(0)}
-  .main{margin-left:0}
+  .sidebar{display:none}
+  .main{margin-left:0;padding-bottom:72px}
   .topbar{padding:0 16px}
-  .content{padding:16px}
+  .content{padding:12px}
   .form-row{grid-template-columns:1fr}
   .kpi-grid{grid-template-columns:1fr 1fr}
-  .rit{grid-template-columns:64px 1fr 70px 36px}
+  .rit{grid-template-columns:52px 1fr auto auto}
+  .bottom-nav{display:flex}
+}
+.bottom-nav{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  z-index:100;
+  padding:0 0 env(safe-area-inset-bottom);
+}
+.bottom-nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;padding:10px 4px;
+  font-size:10px;font-weight:600;color:var(--text-dim);
+  background:none;border:none;cursor:pointer;
+  letter-spacing:.03em;text-transform:uppercase;
+  -webkit-tap-highlight-color:transparent;
+  transition:color .15s;
+}
+.bottom-nav-item .bn-icon{font-size:18px;line-height:1}
+.bottom-nav-item.active{color:var(--accent)}
+.bottom-nav-sync{
+  position:absolute;top:8px;right:8px;
+  width:6px;height:6px;border-radius:50%;
+  background:var(--success);
 }
 </style>
 </head>
@@ -725,7 +749,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '7.5.0';
+const APP_VERSION = '7.6.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1925,6 +1949,22 @@ function updatePinStatusLabel(){
   if(btn) btn.style.display = heeft ? 'inline-flex' : 'none';
 }
 
+async function updateBottomNav(activeEl){
+  document.querySelectorAll('.bottom-nav-item').forEach(el=>el.classList.remove('active'));
+  if(activeEl) activeEl.classList.add('active');
+}
+
+// Sync dot ook in bottom nav tonen
+const origToon = window.toon;
+function syncBottomNavDot(){
+  const dot = document.getElementById('bn-sync-dot');
+  const mainDot = document.getElementById('sync-dot');
+  if(dot && mainDot){
+    const kleur = getComputedStyle(mainDot).background;
+    dot.style.display = mainDot.style.display === 'none' ? 'none' : 'block';
+    dot.style.background = kleur;
+  }
+}
 async function verwijderAlles(){
   if(!confirm('Alle data verwijderen?'))return; if(!confirm('Dit kan niet ongedaan worden gemaakt.'))return;
   data={ritten:[],instellingen:defInst(),autos:[],adressen:[],vasteRitten:[]}; fileSha=null; updateUI(); await slaOp(false); toon('Data gewist');
@@ -1941,5 +1981,25 @@ function toon(b,fout=false){
   clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2800);
 }
 </script>
+<!-- MOBIEL BOTTOM NAV -->
+<nav class="bottom-nav" id="bottom-nav">
+  <button class="bottom-nav-item active" onclick="switchTab('invoer',this);updateBottomNav(this)">
+    <span class="bn-icon">＋</span>Nieuw
+  </button>
+  <button class="bottom-nav-item" onclick="switchTab('ritten',this);updateBottomNav(this)">
+    <span class="bn-icon">📋</span>Ritten
+  </button>
+  <button class="bottom-nav-item" onclick="switchTab('rapport',this);updateBottomNav(this)">
+    <span class="bn-icon">📊</span>Rapport
+  </button>
+  <button class="bottom-nav-item" onclick="switchTab('adresboek',this);updateBottomNav(this)">
+    <span class="bn-icon">📍</span>Adressen
+  </button>
+  <button class="bottom-nav-item" style="position:relative" onclick="switchTab('instellingen',this);updateBottomNav(this)">
+    <span class="bn-icon">⚙</span>Instellingen
+    <div class="bottom-nav-sync" id="bn-sync-dot" style="display:none"></div>
+  </button>
+</nav>
+
 </body>
 </html>
