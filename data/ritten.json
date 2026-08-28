@@ -1,6 +1,18 @@
 {
   "ritten": [
     {
+      "id": 1787900409459,
+      "datum": "2026-08-27",
+      "type": "prive",
+      "van": "Privé rit",
+      "naar": "Privé rit",
+      "kmStart": 41505,
+      "kmEind": 41543,
+      "km": 38,
+      "doel": "Overige kilometers",
+      "opmerking": "34-MX-HL – correctie stand"
+    },
+    {
       "id": 1787870939637,
       "datum": "2026-08-27",
       "type": "zakelijk",
