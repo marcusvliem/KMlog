@@ -279,6 +279,14 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
 .toast.ok::before{content:'✓  ';color:var(--success)}
 .toast.fout{border-color:rgba(224,85,85,.3)}.toast.fout::before{content:'✕  ';color:var(--danger)}
 
+/* ─── PLACES AUTOCOMPLETE ─────────────────── */
+.places-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);z-index:100;max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.4);margin-top:2px}
+.places-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px;line-height:1.4}
+.places-item:last-child{border-bottom:none}
+.places-item:hover,.places-item.actief{background:var(--surface3)}
+.places-item strong{display:block;color:var(--text);font-weight:600;font-size:13px}
+.places-item span{color:var(--text-dim);font-size:11px}
+
 /* ─── PINCODE ─────────────────────────────── */
 .pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border2);background:transparent;transition:all .15s}
 .pin-dot.gevuld{background:var(--accent);border-color:var(--accent)}
@@ -498,15 +506,15 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
             </div>
           </div>
           <div class="form-row" style="margin-top:10px">
-            <div class="fg">
+            <div class="fg" style="position:relative">
               <span class="lbl">Vertrekplaats</span>
-              <input type="text" id="inp-van" list="ac-van" placeholder="Straat 1, Culemborg" oninput="resetAfstand()">
-              <datalist id="ac-van"></datalist>
+              <input type="text" id="inp-van" placeholder="Adres of bedrijfsnaam..." oninput="zoekPlaats(this,'ac-van-list'); resetAfstand()" autocomplete="off">
+              <div id="ac-van-list" class="places-dropdown" style="display:none"></div>
             </div>
-            <div class="fg">
+            <div class="fg" style="position:relative">
               <span class="lbl">Bestemming</span>
-              <input type="text" id="inp-naar" list="ac-naar" placeholder="Straat 1, Alkmaar" oninput="resetAfstand()">
-              <datalist id="ac-naar"></datalist>
+              <input type="text" id="inp-naar" placeholder="Adres of bedrijfsnaam..." oninput="zoekPlaats(this,'ac-naar-list'); resetAfstand()" autocomplete="off">
+              <div id="ac-naar-list" class="places-dropdown" style="display:none"></div>
             </div>
           </div>
 
@@ -717,7 +725,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '7.4.0';
+const APP_VERSION = '7.5.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1387,15 +1395,107 @@ function resetForm(){
   document.querySelector('.form-actions .btn-primary').textContent='Rit opslaan';
 }
 
-// ════════════════════════════════════════════
-// AUTOCOMPLETE
+// ── PLACES AUTOCOMPLETE ──────────────────────
+let placesTimer = null;
+const placesCache = {};
+
+async function zoekPlaats(input, listId) {
+  const q = input.value.trim();
+  const list = document.getElementById(listId);
+
+  // Toon eigen adressen uit adresboek/geschiedenis als prefix match
+  const eigenAdressen = [...new Set([
+    ...(data.adressen||[]).map(a=>a.naam),
+    ...data.ritten.slice(0,200).flatMap(r=>[r.van,r.naar]).filter(Boolean)
+  ])].filter(a => a.toLowerCase().includes(q.toLowerCase()) && q.length > 1);
+
+  if(q.length < 2){ list.style.display='none'; return; }
+
+  // Debounce Google-zoekopdracht
+  clearTimeout(placesTimer);
+
+  // Toon eigen adressen meteen
+  if(eigenAdressen.length){
+    list.innerHTML = eigenAdressen.slice(0,4).map(a=>
+      `<div class="places-item" onclick="kiesAdres('${a.replace(/'/g,"\\'")}','${input.id}','${listId}')">
+        <strong>${a}</strong><span>Eerder gebruikt</span>
+      </div>`
+    ).join('');
+    list.style.display='block';
+  }
+
+  placesTimer = setTimeout(async () => {
+    if(placesCache[q]){ toonPlacesResultaten(placesCache[q], input, listId, eigenAdressen); return; }
+    try {
+      const resp = await fetch('https://places.googleapis.com/v1/places:searchText', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': GOOGLE_API_KEY,
+          'X-Goog-FieldMask': 'places.displayName,places.formattedAddress'
+        },
+        body: JSON.stringify({
+          textQuery: q,
+          languageCode: 'nl',
+          regionCode: 'NL',
+          maxResultCount: 5
+        })
+      });
+      const data2 = await resp.json();
+      const resultaten = data2.places || [];
+      placesCache[q] = resultaten;
+      toonPlacesResultaten(resultaten, input, listId, eigenAdressen);
+    } catch(e){ /* stil falen */ }
+  }, 350);
+}
+
+function toonPlacesResultaten(resultaten, input, listId, eigenAdressen) {
+  const list = document.getElementById(listId);
+  const googleItems = resultaten.map(p => {
+    const naam = p.displayName?.text || '';
+    const adres = p.formattedAddress || '';
+    const volledig = adres; // gebruik het volledige adres als waarde
+    return `<div class="places-item" onclick="kiesAdres('${volledig.replace(/'/g,"\\'")}','${input.id}','${listId}')">
+      <strong>${naam}</strong><span>${adres}</span>
+    </div>`;
+  }).join('');
+
+  const eigenItems = eigenAdressen.slice(0,3).map(a=>
+    `<div class="places-item" onclick="kiesAdres('${a.replace(/'/g,"\\'")}','${input.id}','${listId}')">
+      <strong>${a}</strong><span>Eerder gebruikt</span>
+    </div>`
+  ).join('');
+
+  list.innerHTML = eigenItems + googleItems;
+  list.style.display = (eigenItems || googleItems) ? 'block' : 'none';
+}
+
+function kiesAdres(adres, inputId, listId) {
+  document.getElementById(inputId).value = adres;
+  document.getElementById(listId).style.display = 'none';
+  resetAfstand();
+  // Bereken automatisch afstand als beide velden gevuld zijn
+  const van = document.getElementById('inp-van').value.trim();
+  const naar = document.getElementById('inp-naar').value.trim();
+  if(van && naar) berekenAfstand();
+}
+
+// Sluit dropdown als je erbuiten klikt
+document.addEventListener('click', e => {
+  ['ac-van-list','ac-naar-list'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el && !el.contains(e.target) && e.target.id !== 'inp-van' && e.target.id !== 'inp-naar'){
+      el.style.display = 'none';
+    }
+  });
+});
 // ════════════════════════════════════════════
 function vulAC(){
   const ritAdr=[...new Set(data.ritten.flatMap(r=>[r.van,r.naar]).filter(Boolean))];
   const boekAdr=(data.adressen||[]).map(a=>a.naam);
   const alle=[...new Set([...boekAdr,...ritAdr])];
   const doelen=[...new Set(data.ritten.map(r=>r.doel).filter(Boolean))];
-  ['ac-van','ac-naar'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=alle.map(a=>`<option value="${a}">`).join('');});
+  // ac-van en ac-naar zijn vervangen door places-dropdown, niet meer vullen
   const d=document.getElementById('ac-doel');if(d)d.innerHTML=doelen.map(x=>`<option value="${x}">`).join('');
   const wl=alle.map(a=>`<option value="${a}">`).join('');
   ['wm-van-list','wm-naar-list'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=wl;});
