@@ -749,7 +749,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '7.7.0';
+const APP_VERSION = '7.8.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1953,6 +1953,18 @@ function updateBottomNav(activeEl){
   document.querySelectorAll('.bottom-nav-item').forEach(el=>el.classList.remove('active'));
   if(activeEl) activeEl.classList.add('active');
 }
+
+function checkMobiel(){
+  const mobiel = window.innerWidth <= 768;
+  const nav = document.getElementById('bottom-nav');
+  const sidebar = document.querySelector('.sidebar');
+  const main = document.querySelector('.main');
+  if(nav) nav.style.display = mobiel ? 'flex' : 'none';
+  if(sidebar) sidebar.style.display = mobiel ? 'none' : '';
+  if(main) main.style.paddingBottom = mobiel ? '72px' : '';
+}
+window.addEventListener('resize', checkMobiel);
+document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(checkMobiel, 100); });
 
 // Sync dot ook in bottom nav tonen
 function syncBottomNavDot(){
