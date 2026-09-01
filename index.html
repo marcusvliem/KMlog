@@ -745,7 +745,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '8.1.0';
+const APP_VERSION = '8.2.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1285,9 +1285,26 @@ async function slaRitOp(){
   }
 
   if(bewerkRitId !== null){
-    // Bewerkmodus
     const idx = data.ritten.findIndex(r=>r.id===bewerkRitId);
-    if(idx !== -1) data.ritten[idx] = {...data.ritten[idx], datum, type, van, naar, kmStart, kmEind, km, doel, opmerking};
+    if(idx === -1){ bewerkRitId=null; return; }
+    const oud = data.ritten[idx];
+    const kmVerschil = kmEind - oud.kmEind; // positief = meer km, negatief = minder
+
+    // Check of er latere KTM ritten zijn met standen die doorgeschoven moeten worden
+    const kt = data.instellingen.standaardVoertuig||'';
+    const latereRitten = kt
+      ? data.ritten.filter(r => r.datum >= oud.datum && r.id !== bewerkRitId && r.opmerking?.includes(kt) && (r.kmStart>0||r.kmEind>0))
+      : [];
+
+    if(kmVerschil !== 0 && latereRitten.length > 0 && kmEind > 0){
+      // Toon doorschuif-bevestiging
+      const gewijzigdeRit = {...oud, datum, type, van, naar, kmStart, kmEind, km, doel, opmerking};
+      toonBewerkDoorschuif(gewijzigdeRit, latereRitten, kmVerschil, bewerkRitId);
+      return;
+    }
+
+    // Geen doorschuiven nodig — gewoon opslaan
+    data.ritten[idx] = {...oud, datum, type, van, naar, kmStart, kmEind, km, doel, opmerking};
     bewerkRitId = null;
     toon(km.toLocaleString('nl-NL') + ' km bijgewerkt ✓');
   } else {
@@ -1316,6 +1333,69 @@ async function slaRitOp(){
   document.querySelector('.form-actions .btn-primary').textContent='Rit opslaan';
   updateStats(); vulAC(); updateOdo(); planSync();
   resetForm();
+}
+
+function toonBewerkDoorschuif(gewijzigdeRit, latereRitten, verschil, oudeId){
+  const plus = verschil > 0 ? '+' : '';
+  const preview = latereRitten.slice(0,5).map(r=>{
+    const d=new Date(r.datum+'T12:00:00').toLocaleDateString('nl-NL',{day:'2-digit',month:'short'});
+    return `<tr>
+      <td style="padding:6px 8px;color:var(--text-mid);font-size:12px">${d}</td>
+      <td style="padding:6px 8px;font-size:11px;color:var(--text-dim);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.van?.split(',')[0]?.slice(0,15)} → ${r.naar?.split(',')[0]?.slice(0,15)}</td>
+      <td style="padding:6px 8px;font-family:var(--mono);font-size:11px;color:var(--text-dim);text-decoration:line-through">${r.kmStart>0?r.kmStart.toLocaleString('nl-NL'):'—'} / ${r.kmEind>0?r.kmEind.toLocaleString('nl-NL'):'—'}</td>
+      <td style="padding:6px 8px;font-family:var(--mono);font-size:11px;color:var(--accent2)">${r.kmStart>0?(r.kmStart+verschil).toLocaleString('nl-NL'):'—'} / ${r.kmEind>0?(r.kmEind+verschil).toLocaleString('nl-NL'):'—'}</td>
+    </tr>`;
+  }).join('');
+  const meer=latereRitten.length>5?`<tr><td colspan="4" style="padding:6px 8px;font-size:11px;color:var(--text-dim)">... en ${latereRitten.length-5} andere ritten</td></tr>`:'';
+  const ritJson=JSON.stringify(gewijzigdeRit).replace(/"/g,'&quot;');
+  const modal=document.createElement('div');
+  modal.className='overlay'; modal.id='bewerk-doorschuif-modal';
+  modal.innerHTML=`<div class="modal" style="max-width:560px">
+    <h2>Km-standen aanpassen?</h2>
+    <p class="modal-sub">De eindstand is gewijzigd met <strong>${plus}${verschil} km</strong>. Er zijn ${latereRitten.length} latere ritten — wil je die ook doorschuiven?</p>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
+      <thead><tr>
+        <th style="padding:6px 8px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);text-align:left;border-bottom:1px solid var(--border)">Datum</th>
+        <th style="padding:6px 8px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);text-align:left;border-bottom:1px solid var(--border)">Route</th>
+        <th style="padding:6px 8px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);text-align:left;border-bottom:1px solid var(--border)">Oud</th>
+        <th style="padding:6px 8px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);text-align:left;border-bottom:1px solid var(--border)">Nieuw</th>
+      </tr></thead>
+      <tbody>${preview}${meer}</tbody>
+    </table>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="slaanBewerkingOpZonderDoorschuif(${ritJson},'${oudeId}')">Alleen deze rit</button>
+      <button class="btn btn-primary" onclick="slaanBewerkingOpMetDoorschuif(${ritJson},'${oudeId}',${verschil})">✓ Opslaan + doorschuiven</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+function slaanBewerkingOpZonderDoorschuif(gewijzigdeRit, oudeId){
+  document.getElementById('bewerk-doorschuif-modal')?.remove();
+  const idx=data.ritten.findIndex(r=>String(r.id)===String(oudeId));
+  if(idx!==-1) data.ritten[idx]=gewijzigdeRit;
+  bewerkRitId=null; berekendeAfstand=null;
+  document.querySelector('.form-actions .btn-primary').textContent='Rit opslaan';
+  updateStats(); updateOdo(); planSync(); resetForm();
+  toon(gewijzigdeRit.km.toLocaleString('nl-NL')+' km bijgewerkt ✓');
+}
+
+function slaanBewerkingOpMetDoorschuif(gewijzigdeRit, oudeId, verschil){
+  document.getElementById('bewerk-doorschuif-modal')?.remove();
+  const idx=data.ritten.findIndex(r=>String(r.id)===String(oudeId));
+  if(idx!==-1) data.ritten[idx]=gewijzigdeRit;
+  const kt=data.instellingen.standaardVoertuig||'';
+  data.ritten.forEach(r=>{
+    if(String(r.id)===String(oudeId)) return;
+    if(r.datum<gewijzigdeRit.datum) return;
+    if(kt&&!r.opmerking?.includes(kt)) return;
+    if(r.kmStart>0) r.kmStart+=verschil;
+    if(r.kmEind>0) r.kmEind+=verschil;
+  });
+  bewerkRitId=null; berekendeAfstand=null;
+  document.querySelector('.form-actions .btn-primary').textContent='Rit opslaan';
+  updateStats(); updateOdo(); planSync(); resetForm();
+  toon(`${gewijzigdeRit.km} km bijgewerkt + ${verschil>0?'+':''}${verschil} km doorgeschoven ✓`);
 }
 
 function toonDoorschuifBevestiging(nieuweRit, latereRitten, km){
