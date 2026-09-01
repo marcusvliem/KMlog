@@ -749,7 +749,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '7.9.0';
+const APP_VERSION = '8.0.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1210,6 +1210,8 @@ function pasAfstandAan(delta){
   if (berekendeAfstand === null) return;
   berekendeAfstand = Math.max(1, berekendeAfstand + delta);
   document.getElementById('afstand-val').textContent = berekendeAfstand.toLocaleString('nl-NL');
+  // Wis eindstand zodat berekendeAfstand gebruikt wordt bij opslaan
+  document.getElementById('inp-eind').value = '';
   updateRetourLabel();
   updateKmPill();
 }
@@ -1254,16 +1256,19 @@ async function slaRitOp(){
 
   // Bepaal km
   let km = null, kmStart = 0, kmEind = 0;
-  if(!isNaN(ks) && !isNaN(ke) && ke >= ks){
-    // Beide standen ingevuld — gebruik die
-    km = ke - ks; kmStart = ks; kmEind = ke;
-  } else if (berekendeAfstand !== null) {
+  const standenIngevuld = !isNaN(ks) && !isNaN(ke) && ke >= ks;
+  const afstandAangepast = berekendeAfstand !== null;
+
+  if(bewerkRitId !== null && afstandAangepast){
+    // Bewerkmodus + afstand handmatig aangepast → gebruik berekendeAfstand
     km = berekendeAfstand;
-    // Beginstand ingevuld maar geen eindstand → bereken eindstand automatisch
-    if(!isNaN(ks) && ks > 0){
-      kmStart = ks;
-      kmEind = ks + km;
-    }
+    kmStart = !isNaN(ks) && ks > 0 ? ks : 0;
+    kmEind = kmStart > 0 ? kmStart + km : 0;
+  } else if(standenIngevuld){
+    km = ke - ks; kmStart = ks; kmEind = ke;
+  } else if(afstandAangepast){
+    km = berekendeAfstand;
+    if(!isNaN(ks) && ks > 0){ kmStart = ks; kmEind = ks + km; }
   } else {
     toon('Bereken eerst de afstand of vul km-standen in', true); return;
   }
