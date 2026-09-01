@@ -537,7 +537,10 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
             </div>
             <div class="fg" style="position:relative">
               <span class="lbl">Bestemming</span>
-              <input type="text" id="inp-naar" placeholder="Adres of bedrijfsnaam..." oninput="zoekPlaats(this,'ac-naar-list'); resetAfstand()" autocomplete="off">
+              <div style="display:flex;gap:6px">
+                <input type="text" id="inp-naar" placeholder="Adres of bedrijfsnaam..." oninput="zoekPlaats(this,'ac-naar-list'); resetAfstand()" autocomplete="off" style="flex:1">
+                <button type="button" onclick="gebruikHuidigeLocatie()" title="Huidige locatie" style="flex-shrink:0;width:38px;height:38px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface2);color:var(--text-mid);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center" id="locatie-btn">📍</button>
+              </div>
               <div id="ac-naar-list" class="places-dropdown" style="display:none"></div>
             </div>
           </div>
@@ -549,31 +552,24 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
                 📍 Afstand berekenen
               </button>
               <div id="afstand-status" style="font-size:12px;color:var(--text-dim)">Vul vertrek en bestemming in</div>
-              <div id="afstand-aanpassen" style="display:none;display:flex;align-items:center;gap:8px;margin-left:auto">
-                <button onclick="pasAfstandAan(-1)" style="width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">−</button>
+              <div id="afstand-aanpassen" style="display:none;align-items:center;gap:8px;margin-left:auto">
+                <button onclick="pasAfstandAan(-1)" style="width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
                 <div style="text-align:center;min-width:80px">
                   <div id="afstand-val" style="font-family:var(--mono);font-size:20px;font-weight:500;color:var(--accent2)">0</div>
                   <div style="font-size:10px;color:var(--text-dim);margin-top:1px">km · klik om aan te passen</div>
                 </div>
-                <button onclick="pasAfstandAan(+1)" style="width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">＋</button>
+                <button onclick="pasAfstandAan(+1)" style="width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">＋</button>
               </div>
             </div>
             <div id="route-info" style="display:none;margin-top:8px;font-size:11px;color:var(--text-dim);font-family:var(--mono)"></div>
           </div>
 
           <div class="form-row" style="margin-top:10px">
-            <div class="fg"><span class="lbl">Beginstand (km) <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-dim)">(optioneel)</span></span><input type="number" id="inp-start" placeholder="45230" min="0" oninput="updateKmPill()"></div>
-            <div class="fg"><span class="lbl">Eindstand (km) <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-dim)">(optioneel)</span></span><input type="number" id="inp-eind" placeholder="45334" min="0" oninput="updateKmPill()"></div>
-            <div class="fg"><span class="lbl">Teller verschil</span>
-              <div style="display:flex;align-items:center;gap:8px;height:38px">
-                <div class="km-pill empty" id="km-pill" style="min-height:unset;height:38px;padding:0 12px;font-size:15px">—</div>
-              </div>
-            </div>
-          </div>
-          <div class="form-row" style="margin-top:10px">
+            <div class="fg"><span class="lbl">Beginstand (km) <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-dim)">(optioneel)</span></span><input type="number" id="inp-start" placeholder="41543" min="0" oninput="updateKmPill()"></div>
             <div class="fg"><span class="lbl">Doel / Relatie</span><input type="text" id="inp-doel" list="ac-doel"><datalist id="ac-doel"></datalist></div>
-            <div class="fg"><span class="lbl">Opmerking</span><input type="text" id="inp-opmerking" placeholder="optioneel"></div>
           </div>
+          <input type="hidden" id="inp-eind">
+          <input type="hidden" id="inp-opmerking">
           <div style="display:flex;align-items:center;gap:10px;padding:10px 0 4px">
             <input type="checkbox" id="inp-retour" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer" onchange="updateRetourLabel()">
             <label for="inp-retour" style="font-size:13px;color:var(--text-mid);cursor:pointer;user-select:none">
@@ -749,7 +745,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '8.0.0';
+const APP_VERSION = '8.1.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1218,19 +1214,34 @@ function pasAfstandAan(delta){
 
 
 function updateKmPill(){
-  const s=parseFloat(document.getElementById('inp-start').value), e=parseFloat(document.getElementById('inp-eind').value), el=document.getElementById('km-pill');
-  if(!isNaN(s)&&!isNaN(e)&&e>=s){
-    el.textContent=(e-s).toLocaleString('nl-NL')+' km';
-    el.classList.remove('empty');
-  } else if(!isNaN(s)&&s>0&&berekendeAfstand){
-    // Toon berekende eindstand als preview
-    const eindstand = s + berekendeAfstand;
-    el.textContent=berekendeAfstand.toLocaleString('nl-NL')+' km → eindstand '+eindstand.toLocaleString('nl-NL');
-    el.classList.remove('empty');
-  } else {
-    el.textContent='Vul standen in';
-    el.classList.add('empty');
+  // Eindstand veld is hidden — alleen beginstand lezen voor auto-eindstand berekening
+  const s=parseFloat(document.getElementById('inp-start').value);
+  const eEl=document.getElementById('inp-eind');
+  const e=eEl?parseFloat(eEl.value):NaN;
+  if(!isNaN(s)&&!isNaN(e)&&e>=s&&e>0){
+    berekendeAfstand = e - s;
+    const aanpas=document.getElementById('afstand-aanpassen');
+    if(aanpas){ aanpas.style.display='flex'; document.getElementById('afstand-val').textContent=berekendeAfstand.toLocaleString('nl-NL'); }
+    document.getElementById('afstand-status').textContent=`✓ ${berekendeAfstand} km (teller)`;
+    updateRetourLabel();
   }
+}
+
+async function gebruikHuidigeLocatie(){
+  const btn = document.getElementById('locatie-btn');
+  btn.textContent='⏳'; btn.disabled=true;
+  try {
+    const pos = await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:10000,enableHighAccuracy:true}));
+    const {latitude:lat,longitude:lng}=pos.coords;
+    const resp=await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&language=nl&key=${GOOGLE_API_KEY}`);
+    const d=await resp.json();
+    const adres=d.results?.[0]?.formatted_address||`${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    document.getElementById('inp-naar').value=adres;
+    resetAfstand();
+    if(document.getElementById('inp-van').value.trim()) berekenAfstand();
+    toon('Locatie gevonden ✓');
+  } catch(e){ toon('Locatie niet beschikbaar', true); }
+  btn.textContent='📍'; btn.disabled=false;
 }
 function updateRetourLabel(){
   const retour = document.getElementById('inp-retour')?.checked;
@@ -1690,8 +1701,8 @@ function bewerkRit(id){
 
   // Km standen
   document.getElementById('inp-start').value = r.kmStart||'';
-  document.getElementById('inp-eind').value = r.kmEind||'';
-  updateKmPill();
+  const eindEl = document.getElementById('inp-eind');
+  if(eindEl) eindEl.value = r.kmEind||'';
 
   // Afstand tonen
   berekendeAfstand = r.km;
