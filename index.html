@@ -749,7 +749,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '7.8.0';
+const APP_VERSION = '7.9.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -957,7 +957,17 @@ async function slaOp(msg=true){
 }
 async function syncNu(){ await laadVanGithub(); toon('Gesynchroniseerd'); }
 async function forceerSync(){ await slaOp(true); }
-function planSync(){ clearTimeout(syncTimer); syncTimer=setTimeout(()=>slaOp(false),3000); }
+function planSync(){
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(()=>slaOp(false), 1500);
+}
+// Op mobiel: direct opslaan als pagina wegnavigeert
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState==='hidden' && syncTimer){
+    clearTimeout(syncTimer);
+    slaOp(false);
+  }
+});
 
 // ════════════════════════════════════════════
 // UI
@@ -1037,9 +1047,21 @@ function toonSuggesties(){
 async function bevestigSug(naam,retour){
   const r=(data.vasteRitten||[]).find(v=>v.naam===naam); if(!r)return;
   if(r.altijdRetour) retour=true;
-  const idx=(data.vasteRitten||[]).findIndex(v=>v.naam===naam);
+  // Direct opslaan zonder formulier
+  const datum=new Date().toISOString().slice(0,10);
+  const id=String(r.id||r.naam);
+  const kt=data.instellingen.standaardVoertuig||'';
+  const opm=kt?`${kt} – KTM 1290 SUPER ADVENTURE S`:'Vaste rit';
+  const metStand=data.ritten.filter(x=>x.kmEind>0&&x.opmerking?.includes(kt));
+  const beginstand=metStand.length?metStand.reduce((b,x)=>x.kmEind>b.kmEind?x:b).kmEind:0;
+  const km=r.km;
+  data.ritten.unshift({id:Date.now(),datum,type:r.type,van:r.van,naar:r.naar,kmStart:beginstand,kmEind:beginstand+km,km,doel:r.doel||r.naam,opmerking:opm+(retour?' (heen)':''),vasteRitId:id});
+  if(retour){
+    data.ritten.unshift({id:Date.now()+1,datum,type:r.type,van:r.naar,naar:r.van,kmStart:beginstand+km,kmEind:beginstand+km*2,km,doel:r.doel||r.naam,opmerking:opm+' (retour)',vasteRitId:id});
+  }
   document.getElementById('suggestie-container').innerHTML='';
-  regVaste(idx, retour);
+  updateStats(); updateOdo(); planSync();
+  toon(retour?`Retour ${km*2} km opgeslagen ✓`:`${km} km opgeslagen ✓`);
 }
 
 // ════════════════════════════════════════════
@@ -1064,6 +1086,9 @@ function renderSnelknoppen(){
 async function regVaste(idx,retour){
   const r=data.vasteRitten[idx];
   if(r.altijdRetour) retour=true;
+
+  // Datum op vandaag zetten
+  document.getElementById('inp-datum').value = new Date().toISOString().slice(0,10);
 
   // Formulier invullen en naar invoer tab navigeren
   switchTab('invoer', document.querySelector('.nav-item'));
