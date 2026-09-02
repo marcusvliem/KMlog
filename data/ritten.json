@@ -1,6 +1,32 @@
 {
   "ritten": [
     {
+      "id": 1788369524486,
+      "datum": "2026-09-02",
+      "type": "zakelijk",
+      "van": "Havinghastraat 42 Alkmaar",
+      "naar": "Molenwindsingel 44 Culemborg",
+      "kmStart": 41858,
+      "kmEind": 41962,
+      "km": 104,
+      "doel": "MedITall retour",
+      "opmerking": "34-MX-HL – KTM 1290 SUPER ADVENTURE S (retour)",
+      "vasteRitId": "1787859832834"
+    },
+    {
+      "id": 1788369524484,
+      "datum": "2026-09-02",
+      "type": "zakelijk",
+      "van": "Molenwindsingel 44 Culemborg",
+      "naar": "Havinghastraat 42 Alkmaar",
+      "kmStart": 41754,
+      "kmEind": 41858,
+      "km": 104,
+      "doel": "MedITall retour",
+      "opmerking": "34-MX-HL – KTM 1290 SUPER ADVENTURE S (heen)",
+      "vasteRitId": "1787859832834"
+    },
+    {
       "id": 1788194289586,
       "datum": "2026-08-31",
       "type": "zakelijk",
