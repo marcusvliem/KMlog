@@ -493,10 +493,10 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
         <!-- KILOMETERSTAND WIDGET -->
         <div id="odo-widget" style="margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
           <div>
-            <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Huidige kilometerstand</div>
+            <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px" id="odo-label">Huidige kilometerstand</div>
             <div style="display:flex;align-items:baseline;gap:8px">
               <div id="odo-val" style="font-family:var(--mono);font-size:36px;font-weight:500;color:var(--accent2);letter-spacing:-.02em;line-height:1">—</div>
-              <div style="font-size:14px;color:var(--text-dim);font-family:var(--mono)">km</div>
+              <div style="font-size:14px;color:var(--text-dim);font-family:var(--mono)" id="odo-unit">km</div>
             </div>
             <div id="odo-sub" style="font-size:11px;color:var(--text-dim);margin-top:5px">Eindstand laatste rit</div>
           </div>
@@ -524,7 +524,7 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
               </select>
             </div>
             <div class="fg"><span class="lbl">Voertuig</span>
-              <select id="inp-voertuig">
+              <select id="inp-voertuig" onchange="onVoertuigWissel()">
                 <option value="">— geen —</option>
               </select>
             </div>
@@ -745,7 +745,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '8.3.0';
+const APP_VERSION = '8.4.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -971,39 +971,66 @@ document.addEventListener('visibilitychange', ()=>{
 const TITELS = {invoer:'Nieuwe rit',ritten:'Ritten',rapport:'Rapport',adresboek:'Adresboek',instellingen:'Instellingen'};
 function updateUI(){ updateStats(); vulAC(); renderSnelknoppen(); laadInstUI(); toonSuggesties(); updateOdo(); resetForm(); }
 
+function isStandaardVoertuig(kt){
+  // Standaard (KTM) = het voertuig waarvoor we sluitende km-standen bijhouden
+  return kt === (data.instellingen.standaardVoertuig||'');
+}
+
+function onVoertuigWissel(){
+  const kt = document.getElementById('inp-voertuig').value;
+  const standaard = isStandaardVoertuig(kt);
+  // Beginstand veld: alleen tonen voor standaard voertuig
+  const startWrap = document.getElementById('inp-start').closest('.fg');
+  if(startWrap) startWrap.style.display = standaard ? '' : 'none';
+  updateOdoVoorVoertuig(kt);
+  // Reset beginstand als niet-standaard voertuig
+  if(!standaard) document.getElementById('inp-start').value = '';
+}
+
 function updateOdo(){
-  const standaardKt = data.instellingen.standaardVoertuig||'';
-  const ktRitten = standaardKt
-    ? data.ritten.filter(r => r.datum && r.opmerking?.includes(standaardKt))
+  const kt = document.getElementById('inp-voertuig')?.value || data.instellingen.standaardVoertuig||'';
+  updateOdoVoorVoertuig(kt);
+}
+
+function updateOdoVoorVoertuig(kt){
+  const ktRitten = kt
+    ? data.ritten.filter(r => r.datum && r.opmerking?.includes(kt))
     : data.ritten.filter(r => r.datum);
+  if(!ktRitten.length) return;
 
-  if (!ktRitten.length) return;
-
-  // Zoek de laatste rit met een echte eindstand — dat is ons anker
-  const metStand = ktRitten.filter(r => r.kmEind > 0);
-  if (!metStand.length) return;
-
-  const anker = metStand.reduce((best,r) => r.kmEind > best.kmEind ? r : best);
-
-  // Tel alle ritten op die NA het anker vallen (hebben geen eindstand)
-  const extraKm = ktRitten
-    .filter(r => r.datum > anker.datum && r.kmEind === 0)
-    .reduce((s,r) => s + (r.km||0), 0);
-
-  const actueleStand = anker.kmEind + extraKm;
-
-  // Recentste rit voor de subtitel
-  const recentste = ktRitten.sort((a,b) => a.datum < b.datum ? 1 : -1)[0];
-
-  document.getElementById('odo-val').textContent = actueleStand.toLocaleString('nl-NL');
+  const auto = (data.autos||[]).find(a=>a.kenteken===kt);
+  const recentste = [...ktRitten].sort((a,b)=>a.datum<b.datum?1:-1)[0];
   const d = new Date(recentste.datum+'T12:00:00');
   document.getElementById('odo-laatste-datum').textContent =
     d.toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
-  const auto=(data.autos||[]).find(a=>a.kenteken===standaardKt);
   document.getElementById('odo-voertuig').textContent = auto
-    ? `${auto.kenteken} – ${auto.omschrijving}` : standaardKt||'—';
-  document.getElementById('odo-sub').textContent =
-    `Laatste rit: ${recentste.van?.split(',')[0]||'—'} → ${recentste.naar?.split(',')[0]||'—'}${extraKm > 0 ? ` (+${extraKm} km zonder teller)` : ''}`;
+    ? `${auto.kenteken} – ${auto.omschrijving}` : kt||'—';
+
+  if(isStandaardVoertuig(kt)){
+    // KTM: toon teller stand
+    const metStand = ktRitten.filter(r=>r.kmEind>0);
+    if(!metStand.length) return;
+    const anker = metStand.reduce((b,r)=>r.kmEind>b.kmEind?r:b);
+    const extraKm = ktRitten.filter(r=>r.datum>anker.datum&&r.kmEind===0).reduce((s,r)=>s+(r.km||0),0);
+    const actueel = anker.kmEind + extraKm;
+    document.getElementById('odo-label').textContent = 'Huidige kilometerstand';
+    document.getElementById('odo-val').textContent = actueel.toLocaleString('nl-NL');
+    document.getElementById('odo-unit').textContent = 'km';
+    document.getElementById('odo-sub').textContent =
+      `Laatste rit: ${recentste.van?.split(',')[0]||'—'} → ${recentste.naar?.split(',')[0]||'—'}`;
+  } else {
+    // Ander voertuig: toon zakelijke km dit jaar
+    const jaar = new Date().getFullYear();
+    const totaalJaar = ktRitten
+      .filter(r=>r.datum?.startsWith(String(jaar)) && r.type!=='prive')
+      .reduce((s,r)=>s+(r.km||0),0);
+    const totaalAlles = ktRitten.filter(r=>r.type!=='prive').reduce((s,r)=>s+(r.km||0),0);
+    document.getElementById('odo-label').textContent = `Zakelijke km ${jaar}`;
+    document.getElementById('odo-val').textContent = totaalJaar.toLocaleString('nl-NL');
+    document.getElementById('odo-unit').textContent = 'km';
+    document.getElementById('odo-sub').textContent =
+      `Totaal alle jaren: ${totaalAlles.toLocaleString('nl-NL')} km zakelijk`;
+  }
 }
 
 function switchTab(tab,btn){
@@ -1712,7 +1739,7 @@ function renderRitten(){
     // Begin/eindstand weergave + sequentie-check
     let standHtml = '';
     let fixKnop = '';
-    if(r.kmEind > 0 && r.opmerking?.includes(kt)){
+    if(r.kmEind > 0 && r.opmerking?.includes(kt) && isStandaardVoertuig(kt)){
       const ritIdx = ktGesorteerd.findIndex(x=>x.id===r.id);
       const vorigeEind = ritIdx > 0 ? ktGesorteerd[ritIdx-1].kmEind : null;
       const klopt = vorigeEind === null || r.kmStart === vorigeEind;
