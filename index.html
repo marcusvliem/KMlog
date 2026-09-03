@@ -745,7 +745,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '8.2.0';
+const APP_VERSION = '8.3.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1711,13 +1711,17 @@ function renderRitten(){
 
     // Begin/eindstand weergave + sequentie-check
     let standHtml = '';
+    let fixKnop = '';
     if(r.kmEind > 0 && r.opmerking?.includes(kt)){
       const ritIdx = ktGesorteerd.findIndex(x=>x.id===r.id);
       const vorigeEind = ritIdx > 0 ? ktGesorteerd[ritIdx-1].kmEind : null;
       const klopt = vorigeEind === null || r.kmStart === vorigeEind;
       const kleur = klopt ? 'var(--success)' : 'var(--danger)';
-      const icoon = klopt ? '' : ' ⚠';
-      standHtml = `<div style="font-family:var(--mono);font-size:10px;color:${kleur};margin-top:3px;text-align:right">${r.kmStart.toLocaleString('nl-NL')} → ${r.kmEind.toLocaleString('nl-NL')}${icoon}</div>`;
+      standHtml = `<div style="font-family:var(--mono);font-size:10px;color:${kleur};margin-top:3px;text-align:right">${r.kmStart.toLocaleString('nl-NL')} → ${r.kmEind.toLocaleString('nl-NL')}${klopt?'':' ⚠'}</div>`;
+      if(!klopt && vorigeEind !== null){
+        const verschil = vorigeEind - r.kmStart;
+        fixKnop = `<button class="btn btn-ghost btn-sm rit-del" onclick="fixStand(${r.id},${vorigeEind})" title="Stand corrigeren (${verschil>0?'+':''}${verschil} km)" style="font-size:11px;padding:4px 6px;color:var(--danger)">⚠ Fix</button>`;
+      }
     }
 
     return `<div class="rit ${r.type}">
@@ -1725,6 +1729,7 @@ function renderRitten(){
       <div class="rit-body"><div class="rit-route">${r.van} → ${r.naar}${retourBadge}</div><div class="rit-doel">${r.doel||r.opmerking||'—'}</div></div>
       <div class="rit-km"><div class="rit-km-val">${r.km.toLocaleString('nl-NL')} km</div><span class="badge badge-${r.type}">${bl}</span>${standHtml}</div>
       <div style="display:flex;gap:4px">
+        ${fixKnop}
         ${pijltjes}
         <button class="btn btn-ghost btn-sm rit-del" onclick="bewerkRit(${r.id})" title="Bewerken" style="font-size:13px">✎</button>
         <button class="btn btn-ghost btn-sm rit-del" onclick="dupRit(${r.id})" title="Dupliceer rit" style="font-size:13px">⧉</button>
@@ -1738,7 +1743,26 @@ function renderRitten(){
     <span class="pager-info">${pagina} / ${pages}</span>
     <button class="btn btn-ghost btn-sm" onclick="goPag(${pagina+1})" ${pagina===pages?'disabled':''}>Volgende ›</button>`;
 }
-function goPag(p){pagina=p;renderRitten();}
+function fixStand(id, correcteBeginstand){
+  const r = data.ritten.find(x=>x.id===id);
+  if(!r) return;
+  const verschil = correcteBeginstand - r.kmStart;
+  const kt = data.instellingen.standaardVoertuig||'';
+  const latereRitten = data.ritten.filter(x =>
+    x.opmerking?.includes(kt) && (x.datum > r.datum || (x.datum === r.datum && x.id >= r.id)) && x.id !== id && (x.kmStart>0||x.kmEind>0)
+  );
+  const gewijzigdeRit = {...r, kmStart: correcteBeginstand, kmEind: correcteBeginstand + r.km};
+
+  if(latereRitten.length > 0){
+    toonBewerkDoorschuif(gewijzigdeRit, latereRitten, verschil, id);
+  } else {
+    // Alleen deze rit corrigeren
+    const idx = data.ritten.findIndex(x=>x.id===id);
+    data.ritten[idx] = gewijzigdeRit;
+    planSync(); renderRitten();
+    toon(`Stand gecorrigeerd: ${correcteBeginstand.toLocaleString('nl-NL')} → ${gewijzigdeRit.kmEind.toLocaleString('nl-NL')} ✓`);
+  }
+}
 
 function verschuifRit(id, richting){
   richting = parseInt(richting);
