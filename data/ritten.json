@@ -1,6 +1,30 @@
 {
   "ritten": [
     {
+      "id": 1789041720539,
+      "datum": "2026-09-10",
+      "type": "zakelijk",
+      "van": "Wernerlaan 1, 1213 AR Hilversum",
+      "naar": "Molenwindsingel 44 Culemborg",
+      "kmStart": 42440,
+      "kmEind": 42481,
+      "km": 41,
+      "doel": "",
+      "opmerking": "34-MX-HL – KTM 1290 (retour)"
+    },
+    {
+      "id": 1789041720537,
+      "datum": "2026-09-10",
+      "type": "zakelijk",
+      "van": "Molenwindsingel 44 Culemborg",
+      "naar": "Wernerlaan 1, 1213 AR Hilversum",
+      "kmStart": 42399,
+      "kmEind": 42440,
+      "km": 41,
+      "doel": "",
+      "opmerking": "34-MX-HL – KTM 1290 (heen)"
+    },
+    {
       "id": 1788973399531,
       "datum": "2026-09-09",
       "type": "zakelijk",
