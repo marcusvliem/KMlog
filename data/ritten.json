@@ -1,6 +1,18 @@
 {
   "ritten": [
     {
+      "id": 1790095155900,
+      "datum": "2026-09-22",
+      "type": "zakelijk",
+      "van": "Meditall",
+      "naar": "Rijperweg 87, 1462 MD Middenbeemster",
+      "kmStart": 43383,
+      "kmEind": 43407,
+      "km": 24,
+      "doel": "",
+      "opmerking": "34-MX-HL – KTM 1290"
+    },
+    {
       "id": 1790095133452,
       "datum": "2026-09-22",
       "type": "zakelijk",
