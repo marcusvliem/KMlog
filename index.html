@@ -565,10 +565,10 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
           </div>
 
           <div class="form-row" style="margin-top:10px">
-            <div class="fg"><span class="lbl">Beginstand (km) <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-dim)">(optioneel)</span></span><input type="number" id="inp-start" placeholder="41543" min="0" oninput="updateKmPill()"></div>
+            <div class="fg" id="start-wrap"><span class="lbl">Beginstand (km)</span><input type="number" id="inp-start" placeholder="41543" min="0" oninput="updateKmPill()"></div>
+            <div class="fg" id="eind-wrap" style="display:none"><span class="lbl">Eindstand (km) <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-dim)">optioneel</span></span><input type="number" id="inp-eind" placeholder="41650" min="0" oninput="updateKmPill()"></div>
             <div class="fg"><span class="lbl">Doel / Relatie</span><input type="text" id="inp-doel" list="ac-doel"><datalist id="ac-doel"></datalist></div>
           </div>
-          <input type="hidden" id="inp-eind">
           <input type="hidden" id="inp-opmerking">
           <div style="display:flex;align-items:center;gap:10px;padding:10px 0 4px">
             <input type="checkbox" id="inp-retour" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer" onchange="updateRetourLabel()">
@@ -745,7 +745,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '8.4.0';
+const APP_VERSION = '8.5.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -979,12 +979,16 @@ function isStandaardVoertuig(kt){
 function onVoertuigWissel(){
   const kt = document.getElementById('inp-voertuig').value;
   const standaard = isStandaardVoertuig(kt);
-  // Beginstand veld: alleen tonen voor standaard voertuig
-  const startWrap = document.getElementById('inp-start').closest('.fg');
+  // Beginstand + eindstand alleen voor KTM
+  const startWrap = document.getElementById('start-wrap');
+  const eindWrap = document.getElementById('eind-wrap');
   if(startWrap) startWrap.style.display = standaard ? '' : 'none';
+  if(eindWrap) eindWrap.style.display = standaard ? '' : 'none';
   updateOdoVoorVoertuig(kt);
-  // Reset beginstand als niet-standaard voertuig
-  if(!standaard) document.getElementById('inp-start').value = '';
+  if(!standaard){
+    document.getElementById('inp-start').value = '';
+    document.getElementById('inp-eind').value = '';
+  }
 }
 
 function updateOdo(){
@@ -1830,7 +1834,11 @@ function bewerkRit(id){
   document.getElementById('inp-doel').value = r.doel||'';
   document.getElementById('inp-opmerking').value = r.opmerking||'';
 
-  // Km standen
+  // Km standen — toon eindstand veld voor KTM
+  const kt = data.instellingen.standaardVoertuig||'';
+  const isKtm = r.opmerking?.includes(kt);
+  const eindWrap = document.getElementById('eind-wrap');
+  if(eindWrap) eindWrap.style.display = isKtm ? '' : 'none';
   document.getElementById('inp-start').value = r.kmStart||'';
   const eindEl = document.getElementById('inp-eind');
   if(eindEl) eindEl.value = r.kmEind||'';
