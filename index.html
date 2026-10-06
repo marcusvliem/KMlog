@@ -633,6 +633,7 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
             <div class="kpi-sub" id="kpi-ritten">0 ritten</div>
           </div>
         </div>
+        <div id="rapport-voertuigen"></div>
         <div class="card">
           <div class="card-header"><span class="card-title">Maandoverzicht</span></div>
           <table class="maand-table">
@@ -751,7 +752,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '9.7.0';
+const APP_VERSION = '9.8.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
