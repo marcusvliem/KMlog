@@ -745,7 +745,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '10.3.0';
+const APP_VERSION = '10.4.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1776,6 +1776,8 @@ function renderRitten(){
     <span class="pager-info">${pagina} / ${pages}</span>
     <button class="btn btn-ghost btn-sm" onclick="goPag(${pagina+1})" ${pagina===pages?'disabled':''}>Volgende ›</button>`;
 }
+function goPag(p){pagina=p;renderRitten();}
+
 function fixStand(id, correcteBeginstand){
   const r = data.ritten.find(x=>x.id===id);
   if(!r) return;
