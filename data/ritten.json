@@ -1,6 +1,18 @@
 {
   "ritten": [
     {
+      "id": 1791270507454,
+      "datum": "2026-10-02",
+      "type": "prive",
+      "van": "Molenwindsingel 44 Culemborg",
+      "naar": "Privé",
+      "kmStart": 44142,
+      "kmEind": 44415,
+      "km": 273,
+      "doel": "Rondje Veluwe",
+      "opmerking": "34-MX-HL – KTM 1290"
+    },
+    {
       "id": 1791269269079,
       "datum": "2026-10-01",
       "type": "zakelijk",
