@@ -751,7 +751,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '9.1.0';
+const APP_VERSION = '9.2.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1301,7 +1301,12 @@ async function slaRitOp(){
   const voertuig=document.getElementById('inp-voertuig').value;
   const auto=(data.autos||[]).find(a=>a.kenteken===voertuig);
   const opmerking=voertuig ? `${voertuig}${auto?' – '+auto.omschrijving:''}` : document.getElementById('inp-opmerking').value.trim();
-  if(!datum||!van||!naar){toon('Vul datum, vertrek en bestemming in',true);return;}
+  // Route is optioneel als begin+eindstand zijn ingevuld
+  const heeftStanden = !isNaN(ks) && !isNaN(ke) && ke > ks;
+  if(!datum){toon('Vul een datum in',true);return;}
+  if(!heeftStanden && (!van||!naar)){toon('Vul vertrek en bestemming in (of begin en eindstand)',true);return;}
+  if(!van) document.getElementById('inp-van').value = van = 'Privé';
+  if(!naar) document.getElementById('inp-naar').value = naar = 'Privé';
 
   // Bepaal km
   let km = null, kmStart = 0, kmEind = 0;
