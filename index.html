@@ -572,7 +572,7 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
 
           <div class="form-row" style="margin-top:10px">
             <div class="fg" id="start-wrap"><span class="lbl">Beginstand (km)</span><input type="number" id="inp-start" placeholder="41543" min="0" oninput="updateKmPill()"></div>
-            <div class="fg" id="eind-wrap" style="display:none"><span class="lbl">Eindstand (km) <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-dim)">optioneel</span></span><input type="number" id="inp-eind" placeholder="41650" min="0" oninput="updateKmPill()"></div>
+            <div class="fg" id="eind-wrap"><span class="lbl">Eindstand (km) <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-dim)">optioneel</span></span><input type="number" id="inp-eind" placeholder="41650" min="0" oninput="updateKmPill()"></div>
             <div class="fg"><span class="lbl">Doel / Relatie</span><input type="text" id="inp-doel" list="ac-doel"><datalist id="ac-doel"></datalist></div>
           </div>
           <input type="hidden" id="inp-opmerking">
@@ -751,7 +751,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '9.0.0';
+const APP_VERSION = '9.1.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
