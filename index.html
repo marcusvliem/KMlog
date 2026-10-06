@@ -745,7 +745,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '9.9.0';
+const APP_VERSION = '10.0.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1933,12 +1933,12 @@ function renderRapport(){
   document.getElementById('rapport-voertuigen').innerHTML = voertuigHtml;
 
   const md={};
-  jr.forEach(r=>{const m=r.datum.slice(0,7);if(!md[m])md[m]={n:0,z:0,p:0};md[m].n++;if(r.type==='zakelijk')md[m].z+=r.km;else if(r.type==='woonwerk')md[m].w+=r.km;else md[m].p+=r.km;});
+  jr.forEach(r=>{const m=r.datum.slice(0,7);if(!md[m])md[m]={n:0,z:0,p:0};md[m].n++;if(r.type==='zakelijk')md[m].z+=r.km;else if(r.type==='prive')md[m].p+=r.km;});
   const maanden=Object.keys(md).sort().reverse();
   document.getElementById('maand-body').innerHTML=!maanden.length
-    ?`<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-dim)">Geen ritten in ${jaar}</td></tr>`
-    :maanden.map(m=>{const d=md[m],naam=new Date(m+'-01').toLocaleDateString('nl-NL',{year:'numeric',month:'long'}),tv=(d.z+d.w)*verg;
-      return `<tr><td>${naam}</td><td>${d.n}</td><td class="hi">${d.z.toLocaleString('nl-NL')}</td><td style="color:var(--warning)">${d.w.toLocaleString('nl-NL')}</td><td>${d.p.toLocaleString('nl-NL')}</td><td class="hi">€ ${tv.toFixed(2).replace('.',',')}</td></tr>`;}).join('');
+    ?`<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-dim)">Geen ritten in ${jaar}</td></tr>`
+    :maanden.map(m=>{const d=md[m],naam=new Date(m+'-01').toLocaleDateString('nl-NL',{year:'numeric',month:'long'}),tv=d.z*verg;
+      return `<tr><td>${naam}</td><td>${d.n}</td><td class="hi">${d.z.toLocaleString('nl-NL')}</td><td>${d.p.toLocaleString('nl-NL')}</td><td class="hi">€ ${tv.toFixed(2).replace('.',',')}</td></tr>`;}).join('');
 }
 
 // ════════════════════════════════════════════
