@@ -745,7 +745,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '8.7.0';
+const APP_VERSION = '8.8.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1853,7 +1853,7 @@ function bewerkRit(id){
   document.getElementById('bereken-btn').textContent='🔄 Herberekenen';
 
   // Voertuig
-  const kt=r.opmerking?.match(/([A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+)/)?.[1]||data.instellingen.standaardVoertuig||'';
+  kt = r.opmerking?.match(/([A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+)/)?.[1]||data.instellingen.standaardVoertuig||'';
   const vsel=document.getElementById('inp-voertuig'); if(vsel)vsel.value=kt;
 
   // Opslaan knop aanpassen
