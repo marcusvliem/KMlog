@@ -751,7 +751,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '9.4.0';
+const APP_VERSION = '9.5.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1310,16 +1310,11 @@ async function slaRitOp(){
 
   // Bepaal km
   let km = null, kmStart = 0, kmEind = 0;
-  const standenIngevuld = !isNaN(ks) && !isNaN(ke) && ke >= ks;
-  const afstandAangepast = berekendeAfstand !== null;
+  const standenIngevuld = !isNaN(ks) && !isNaN(ke) && ke > ks; // ke MOET groter zijn dan ks
+  const afstandAangepast = berekendeAfstand !== null && berekendeAfstand > 0;
 
   if(standenIngevuld){
-    // Begin én eindstand ingevuld — dit heeft altijd voorrang
     km = ke - ks; kmStart = ks; kmEind = ke;
-  } else if(bewerkRitId !== null && afstandAangepast){
-    km = berekendeAfstand;
-    kmStart = !isNaN(ks) && ks > 0 ? ks : 0;
-    kmEind = kmStart > 0 ? kmStart + km : 0;
   } else if(afstandAangepast){
     km = berekendeAfstand;
     if(!isNaN(ks) && ks > 0){ kmStart = ks; kmEind = ks + km; }
