@@ -751,7 +751,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '8.9.0';
+const APP_VERSION = '9.0.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -872,6 +872,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!githubToken) { document.getElementById('setup-modal').style.display='flex'; return; }
   else { await laadVanGithub(); checkUpdate(); }
   toonSuggesties();
+  onVoertuigWissel(); // eindstand veld tonen op basis van voertuig
 });
 
 // ════════════════════════════════════════════
