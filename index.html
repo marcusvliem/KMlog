@@ -751,7 +751,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '9.3.0';
+const APP_VERSION = '9.4.0';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1353,12 +1353,13 @@ async function slaRitOp(){
   } else {
     const isRetour = document.getElementById('inp-retour')?.checked;
     const nieuweRit = {id:Date.now(),datum,type,van,naar,kmStart,kmEind,km,doel,opmerking:opmerking+(isRetour?' (heen)':'')};
-    const standaardKt = data.instellingen.standaardVoertuig||voertuig||'';
-    const latereRitten = standaardKt
+    const standaardKt = data.instellingen.standaardVoertuig||'';
+    const isStandaard = standaardKt && opmerking.includes(standaardKt);
+    const latereRitten = isStandaard
       ? data.ritten.filter(r => r.datum > datum && r.opmerking?.includes(standaardKt) && (r.kmStart > 0 || r.kmEind > 0))
       : [];
 
-    if(latereRitten.length > 0 && kmEind > 0){
+    if(isStandaard && latereRitten.length > 0 && kmEind > 0){
       const retourRit = isRetour ? {id:Date.now()+1,datum,type,van:naar,naar:van,kmStart:kmEind,kmEind:kmEind+km,km,doel,opmerking:opmerking+' (retour)'} : null;
       nieuweRit._retourRit = retourRit;
       toonDoorschuifBevestiging(nieuweRit, latereRitten, km);
