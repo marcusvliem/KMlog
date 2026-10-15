@@ -1,6 +1,18 @@
 {
   "ritten": [
     {
+      "id": 1792047516383,
+      "datum": "2026-10-08",
+      "type": "zakelijk",
+      "van": "Clarissenhof 3C, 4133 AB Vianen",
+      "naar": "Molenwindsingel 44 Culemborg",
+      "kmStart": 45301,
+      "kmEind": 45315,
+      "km": 14,
+      "doel": "",
+      "opmerking": "34-MX-HL – KTM 1290"
+    },
+    {
       "id": 1792047505838,
       "datum": "2026-10-08",
       "type": "zakelijk",
