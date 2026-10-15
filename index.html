@@ -177,7 +177,7 @@ textarea{resize:vertical;min-height:64px;font-family:var(--sans);font-size:13px}
 .filter-row .search{flex:2}
 .rit-list{display:flex;flex-direction:column;gap:2px}
 .rit{
-  display:grid;grid-template-columns:80px 1fr 90px 48px;
+  display:grid;grid-template-columns:80px 1fr 90px auto;
   gap:12px;align-items:center;
   padding:10px 14px;border-radius:var(--r-sm);
   background:var(--surface);border:1px solid transparent;
@@ -745,7 +745,7 @@ const DATA_FILE   = 'data/ritten.json';
 const APP_FILE    = 'index.html';
 const TOKEN_KEY   = 'kmlog_github_token';
 const LOCAL_KEY   = 'kmlog_data';
-const APP_VERSION = '10.4.0';
+const APP_VERSION = '10.4.1';
 
 let data = { ritten:[], instellingen:defInst(), autos:[], adressen:[], vasteRitten:[] };
 let githubToken = laadToken();
@@ -1761,7 +1761,7 @@ function renderRitten(){
       <div class="rit-date"><strong>${dag}</strong>${d.getFullYear()}</div>
       <div class="rit-body"><div class="rit-route">${r.van} → ${r.naar}${retourBadge}</div><div class="rit-doel">${r.doel||r.opmerking||'—'}</div></div>
       <div class="rit-km"><div class="rit-km-val">${r.km.toLocaleString('nl-NL')} km</div><span class="badge badge-${r.type}">${bl}</span>${standHtml}</div>
-      <div style="display:flex;gap:4px">
+      <div style="display:flex;gap:4px;flex-wrap:nowrap;justify-content:flex-end">
         ${fixKnop}
         ${pijltjes}
         <button class="btn btn-ghost btn-sm rit-del" onclick="bewerkRit(${r.id})" title="Bewerken" style="font-size:13px">✎</button>
@@ -1857,8 +1857,8 @@ function bewerkRit(id){
   document.getElementById('bereken-btn').textContent='🔄 Herberekenen';
 
   // Voertuig
-  kt = r.opmerking?.match(/([A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+)/)?.[1]||data.instellingen.standaardVoertuig||'';
-  const vsel=document.getElementById('inp-voertuig'); if(vsel)vsel.value=kt;
+  const vt = r.opmerking?.match(/([A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+)/)?.[1]||data.instellingen.standaardVoertuig||'';
+  const vsel=document.getElementById('inp-voertuig'); if(vsel)vsel.value=vt;
 
   // Opslaan knop aanpassen
   document.querySelector('.form-actions .btn-primary').textContent='✎ Wijzigingen opslaan';
