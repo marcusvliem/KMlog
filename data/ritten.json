@@ -1,6 +1,18 @@
 {
   "ritten": [
     {
+      "id": 1792047505838,
+      "datum": "2026-10-08",
+      "type": "zakelijk",
+      "van": "Westzijde 174C, 1506 EK Zaandam",
+      "naar": "Clarissenhof 3C, 4133 AB Vianen",
+      "kmStart": 45235,
+      "kmEind": 45301,
+      "km": 66,
+      "doel": "",
+      "opmerking": "34-MX-HL – KTM 1290"
+    },
+    {
       "id": 1792047483616,
       "datum": "2026-10-08",
       "type": "zakelijk",
