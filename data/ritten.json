@@ -1,6 +1,18 @@
 {
   "ritten": [
     {
+      "id": 1792047483616,
+      "datum": "2026-10-08",
+      "type": "zakelijk",
+      "van": "Molenwindsingel 44 Culemborg",
+      "naar": "Westzijde 174C, 1506 EK Zaandam",
+      "kmStart": 45157,
+      "kmEind": 45235,
+      "km": 78,
+      "doel": "",
+      "opmerking": "34-MX-HL – KTM 1290"
+    },
+    {
       "id": 1792047454089,
       "datum": "2026-10-07",
       "type": "zakelijk",
