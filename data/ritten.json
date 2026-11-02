@@ -1,6 +1,30 @@
 {
   "ritten": [
     {
+      "id": 1793598308001,
+      "datum": "2026-10-29",
+      "type": "zakelijk",
+      "van": "Nieuwstraat 77A, 5683 KB Best",
+      "naar": "Molenwindsingel 44 Culemborg",
+      "kmStart": 46230,
+      "kmEind": 46289,
+      "km": 59,
+      "doel": "",
+      "opmerking": "34-MX-HL – KTM 1290 (retour)"
+    },
+    {
+      "id": 1793598307999,
+      "datum": "2026-10-29",
+      "type": "zakelijk",
+      "van": "Molenwindsingel 44 Culemborg",
+      "naar": "Nieuwstraat 77A, 5683 KB Best",
+      "kmStart": 46171,
+      "kmEind": 46230,
+      "km": 59,
+      "doel": "",
+      "opmerking": "34-MX-HL – KTM 1290 (heen)"
+    },
+    {
       "id": 1793170897794,
       "datum": "2026-10-28",
       "type": "zakelijk",
