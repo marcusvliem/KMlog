@@ -1,6 +1,30 @@
 {
   "ritten": [
     {
+      "id": 1793810185903,
+      "datum": "2026-11-03",
+      "type": "zakelijk",
+      "van": "Krijtwal 15, 3432 ZT Nieuwegein",
+      "naar": "Molenwindsingel 44 Culemborg",
+      "kmStart": 46522,
+      "kmEind": 46541,
+      "km": 19,
+      "doel": "",
+      "opmerking": "34-MX-HL – KTM 1290 (retour)"
+    },
+    {
+      "id": 1793810185901,
+      "datum": "2026-11-03",
+      "type": "zakelijk",
+      "van": "Molenwindsingel 44 Culemborg",
+      "naar": "Krijtwal 15, 3432 ZT Nieuwegein",
+      "kmStart": 46503,
+      "kmEind": 46522,
+      "km": 19,
+      "doel": "",
+      "opmerking": "34-MX-HL – KTM 1290 (heen)"
+    },
+    {
       "id": 1793598314105,
       "datum": "2026-11-02",
       "type": "zakelijk",
